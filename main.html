@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/css/materialize.min.css" />
+
+    <?!= include("style"); ?>
+  </head>
+  <body>
+  <div class="container">
+    <h1>Welcome to DriveStream</h1>
+    
+    <div class="libraries">
+    <h3>Libraries</h3>
+    
+    <a class="waves-effect waves-light btn" id="authButton">New Library</a>
+    
+    <div class="row" id="libraries">
+    
+    </div>
+    </div>
+    
+    <div class="row library">
+      
+    </div>
+    
+  </div>
+  
+    <?!= include('modals')?>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/js/materialize.min.js"></script>
+    <?!= include('scripts')?>
+  </body>
+</html>
+
+
