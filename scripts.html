@@ -1,13 +1,30 @@
 
 <script>
-$(function() {
+    $(function() {
      $('.modal').modal();
-     console.log( "Fetching libraries..." );
-     Materialize.toast("Fetching libraries...", 1000);
+     Materialize.toast("Fetching libraries...",40000,'fetching-libraries');
      //createLoader('#libraries');
      getLibraries();
      
+     // SEARCH
+     $('.search').on("keyup", function() {
+      var term = $(this).val().toUpperCase();
+      if (term == undefined) {
+          $('.col-4').show();
+      } else  {
+          $(".col-4").each(function(i) {
+              if ($(this).text().toUpperCase().indexOf(term) !== -1){
+                  $(this).show();
+              } else {
+                  $(this).hide();
+              }
+          });
+      }
+     });
+     
      //google.script.run.withSuccessHandler(init).scanFolder();
+     // RENDER
+     $('select').material_select();
     });
     
     function init(string) {
@@ -18,6 +35,10 @@ $(function() {
     google.script.run.withSuccessHandler(showLibraries).getLibraries();
     }
     
+    //--------------
+    // OPEN FOLDERS
+    //--------------
+    
     $('#authButton').click(function(){
      $('#newLibrary').modal('open');
      createLoader("#folders");
@@ -26,8 +47,6 @@ $(function() {
     });
     
     function showFolders(things) {
-     
-    
      var list = $('#folders');
      list.empty();
      for (var i = 0; i < things.length; i++) {
@@ -49,23 +68,20 @@ $(function() {
      data[0] = $('#newLibraryName').val();
      data[1] = $('#newLibraryType').val();
      data[2] = ids;
-         
+        
      $('#newLibraryForm').trigger("reset");
      
-     Materialize.toast("Creating library...");
+     Materialize.toast("Creating library...",40000,'creating-library');
      
      google.script.run.withSuccessHandler(createLibrarySuccess).withFailureHandler(createLibraryFailure).withUserObject(data).createLibrary(data);
      
      getLibraries();
      
      function createLibrarySuccess(id) {
-     var toastElement = $('.toast').first()[0];
-     var toastInstance = toastElement.M_Toast;
-     toastInstance.remove();
+     $('.creating-library').fadeOut();
      
       Materialize.toast(data[0] + ' was created!', 3000);
       getLibraries();
-      console.log(id);
       google.script.run.scanLibrary(id);
       Materialize.toast('Scan of '+data[0] + ' has begun!', 3000);
      }
@@ -77,21 +93,22 @@ $(function() {
      Materialize.toast('Failed to create library: ' + e, 3000)
     }
     
-    function showLibraries(things) {
+    function showLibraries(libraries) {
+    $('.fetching-libraries').fadeOut();
      var list = $('#libraries');
      list.empty();
-     for (var i = 1; i < things.length; i++) {
+     for (var i = 0; i < libraries.length; i++) {
       list.append(
       
        ' <div class="col s4">'+
        '   <div class="card">'+
        '     <div class="card-content"'+
        '       <img src="https://picsum.photos/100/100">'+
-       '       <span class="card-title">' + things[i][0]+'</span>'+
+       '       <span class="card-title">' + libraries[i].name +'</span>'+
        '     </div>'+
       '      <div class="card-action">'+
-       '       <a data-library-id="'+ things[i][3] +'" data-library-name="'+ things[i][0] +'" class="openLibrary">Open</a>'+
-       '       <a data-library-id="'+ things[i][3] +'" data-library-name="'+ things[i][0] +'" class="refreshLibrary">Refresh</a>'+
+       '       <a data-library-id="'+ libraries[i].id +'" data-library-name="'+ libraries[i].name +'" class="openLibrary">Open</a>'+
+       '       <a data-library-id="'+ libraries[i].id +'" data-library-name="'+ libraries[i].name +'" class="refreshLibrary">Refresh</a>'+
       '      </div>'+
       '    </div>'+
        ' </div>'
@@ -126,24 +143,38 @@ $(function() {
     
     $( '#libraries' ).on( 'click', 'a.openLibrary', function () {
      var name = $(this).data("library-name");
-     console.log(name);
      Materialize.toast("Opening " + name + "...",3000);
-     google.script.run.withSuccessHandler(openLibrarySuccess).openLibrary($(this).data("library-id"));
+     google.script.run.withSuccessHandler(renderMediaItems).openLibrary($(this).data("library-id"));
      
-     function openLibrarySuccess(files) {
+     window.currentLibrary = $(this).data("library-id");
+     
      var list = $('.library');
      list.empty();
-     console.log(files[4]);
+     
+
+     
+    });
+    
+    //-----------
+    // Main template
+    //-----------
+    
+    function renderMediaItems(files) {
+     var list = $('.library');
+     list.empty();
      for (var i = 1; i < files.length; i++) {
-     var image;
-     console.log(files[i][9]);
-     if (files[i][9] != "") {
-      if (files[i][9].includes(".jpg")) { image = "https://image.tmdb.org/t/p/w154/" + files[i][9] } 
-      else { image = files[i][9]; }
-     } else {
-      image = "https://via.placeholder.com/154x231";
-      //google.script.run.withSuccessHandler(getThumbSuccess).getThumb(files[i][0]);
+     if (files[i][11]) {
+      continue;
      }
+     var image;
+     if (files[i][9] != "") {
+       image = "https://image.tmdb.org/t/p/w154/" + files[i][9] 
+     } else {
+      google.script.run.withSuccessHandler(getThumbSuccess).getThumb(files[i][0]);
+     }
+     
+     // Size
+     var size = files[i][6] / Math.pow(1024,3);
      
       list.append(
        '<div class="col s4 m4">'+
@@ -159,10 +190,14 @@ $(function() {
      '        <div class="card-action">'+
      '          <a class="dropdown-button" data-activates="dropdown_'+files[i][0]+'">Watch</a>'+
      '<ul id="dropdown_'+files[i][0]+'" class="dropdown-content">'+
-     '    <li><a href="https://drive.google.com/file/d/'+files[i][0]+'/preview" target="_blank"><i class="material-icons">play_arrow</i>SD</a></li>'+
+     '    <li><a class="media-sd" href="https://drive.google.com/file/d/'+files[i][0]+'/preview" target="_blank"><i class="material-icons">play_arrow</i>SD</a></li>'+
      '    <li><a class="media-hd" data-id="'+files[i][0]+'"><i class="material-icons">play_arrow</i>HD</a></li>'+
      '    <li class="divider"></li>'+
-     '    <li><a href="https://drive.google.com/uc?export=download&id='+files[i][0]+'" target="_blank"><i class="material-icons">file_download</i>Download</a></li>'+
+     '    <li><a href="https://drive.google.com/uc?export=download&id='+files[i][0]+'" target="_blank"><i class="material-icons">file_download</i>Save</a></li>'+
+     '  </ul>' +
+     '<a class="dropdown-button" data-activates="dropdown_options_'+files[i][0]+'"><i class="material-icons">settings</i></a>'+
+     '<ul id="dropdown_options_'+files[i][0]+'" class="dropdown-content">'+
+     '    <li><a class="hide-item" data-id="'+files[i][0]+'"><i class="material-icons">visibility_off</i>Hide</a></li>'+
      '  </ul>' +
      '        </div>'+
      '      </div>'+
@@ -173,15 +208,12 @@ $(function() {
       enableDropdowns();     
       //movieAPIRequest(files[i][1],files[i][0]);
      }
-     
-     
      }
-     
-    });
+    
     
      $( '#libraries' ).on( 'click', 'a.refreshLibrary', function () {
       var id = $(this).data('library-id');
-      google.script.run.withSuccessHandler(refreshLibrarySuccess).refreshMetadata(id);
+      google.script.run.withSuccessHandler(refreshLibrarySuccess).scanLibrary(id);
       Materialize.toast('Refreshing library...');
       createLoaderInd(this.closest('.card-action'));
      });
@@ -189,13 +221,31 @@ $(function() {
      function refreshLibrarySuccess() {
      }
      
-     $( '#libraries' ).on( 'click', 'a.media-hd', function () {
+     
+     //-------------
+     // Click events
+     //-------------
+     $(document).on( 'click', 'a.media-sd', function () {
       var id = $(this).data('id');
       google.script.run.withSuccessHandler(getHDSuccess).refreshMetadata(id);
      });
+     
+     $(document).on( 'click', 'a.media-hd', function () {
+      var id = $(this).data('id');
+      google.script.run.withSuccessHandler(getHDSuccess).refreshMetadata(id);
+     });
+     
+     $(document).on("click", "a.hide-item" , function() {
+        var id = $(this).attr("data-id");
+        
+        $('#' + id).parent().hide();
+        
+        google.script.run.hideItem(id,window.currentLibrary);
+     });
+     
     
     function getThumbSuccess(data) {
-     $('#' + data.id + ' .media-image').attr('src',data.thumb);
+     $('#' + data.id + ' > .card-image > img').attr('src',data.thumb);
     }
     
    
@@ -217,7 +267,6 @@ $(function() {
        
     function movieAPIRequest(name,id) {
     var title = getTitle(name);
-    console.log("Making request for " + title);
     
     var settings = {
     "async": true,
@@ -231,7 +280,6 @@ $(function() {
       setTimeout(function(){
       
       $.ajax(settings).done(function (response) {
-      console.log("Loaded metadata for " + response.results[0].title);
       
       $('#' + id + ' .media-image').attr("src", "https://image.tmdb.org/t/p/w154" + response.results[0].poster_path);
       
@@ -280,64 +328,32 @@ $(function() {
   });
   }
   
+   $('body').on( 'click', 'a.media-hd', function () {
+     downloadFile($(this).attr("data-id"));
+   });
+  
   function downloadFile(id) {
   
   google.script.run.withSuccessHandler(doDownload).getToken();
   
    function doDownload(accessToken) { 
-    /* One-time setup (run once before other code)
- *   adds onreadystatechange to $.ajax options
- *   from https://gist.github.com/chrishow/3023092)
- *   success etc will still fire if provided
- */
-    $.ajaxPrefilter(function( options, originalOptions, jqXHR ) {
-        if ( options.onreadystatechange ) {
-            var xhrFactory = options.xhr;
-            options.xhr = function() {
-                var xhr = xhrFactory.apply( this, arguments );
-                function handler() {
-                    options.onreadystatechange( xhr, jqXHR );
-                }
-                if ( xhr.addEventListener ) {
-                    xhr.addEventListener( "readystatechange", handler, false );
-                } else {
-                    setTimeout( function() {
-                        var internal = xhr.onreadystatechange;
-                        if ( internal ) {
-                            xhr.onreadystatechange = function() {
-                                handler();
-                                internal.apply( this, arguments ); 
-                            };
-                        }
-                    }, 0 );
-                }
-                return xhr;
-            };
-        }
-    });
-
-    // ----- myReadyStateChange(): this will do my incremental processing -----
-    var last_start = 0; // using global var for over-simplified example
-    function myReadyStateChange(xhr /*, jqxhr */) {
-        if(xhr.readyState >= 3 && xhr.responseText.length  > last_start) {
-            var chunk = xhr.responseText.slice(last_start);
-            alert('Got chunk: ' + chunk.length);
-            console.log('Got chunk: ', chunk);
-            $('div').append(chunk);
-            last_start += chunk.length;
-        }
-    }
-
-    // ----- call my url and process response incrementally -----
-    last_start = 0;
-    var fileId = '0B1aXJXlAP0eZV0EtX0ZCVTVxNUU';
-    var accessToken = 'ya29.GlwyBRrB_Ur5E5L8MpjD_O5e6xiKw_rIkjlBDMeM5UA2AGZkK1Ne-2LA9_QVJnNsi1b3LdBML8h9e677y0H-PRuvxpe_JHAHFLBIJQ-NA1ngokj8SqvV9sfWYX3K4w';
-    $.ajax({
-        url: 'https://www.googleapis.com/drive/v3/files/'+fileId+'?alt=media',
-        headers: { 'Authorization' : 'OAuth '+accessToken },
-        onreadystatechange: myReadyStateChange
-    });
-    
+    var url = 'https://www.googleapis.com/drive/v3/files/'+id+'?alt=media&acknowledgeAbuse=true'
+    console.log(url);
+     google.script.run.withSuccessHandler(makeRequest).withUserObject(accessToken).getDownload(id);
+     
+     function makeRequest(file, accessToken) {
+     
+        $.ajax({
+         url: 'https://www.googleapis.com/drive/v3/files/'+id+'?alt=media&acknowledgeAbuse=true',
+         headers: { 'Authorization' : 'OAuth '+accessToken }
+        });
+     
+        //$('body').prepend('<video src="'+file+'" autoplay>');
+     }
+   }
+   
+   function playHD(url) {
+       $('body').append("<video src='"+url+"'>")
    }
    
    

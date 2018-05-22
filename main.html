@@ -7,13 +7,21 @@
     <?!= include("style"); ?>
   </head>
   <body>
+   
   <div class="container">
-    <h1>Welcome to DriveStream</h1>
+    <nav class="light-blue darken-1">
+    <div class="nav-wrapper">
+      <a href="#!" class="brand-logo center">DriveStream</a>
+      <ul class="left hide-on-med-and-down">
+        <li class="active"><a href="collapsible.html">Libraries</a></li>
+      </ul>
+    </div>
+  </nav>
     
     <div class="libraries">
-    <h3>Libraries</h3>
     
-    <a class="waves-effect waves-light btn" id="authButton">New Library</a>
+    <a class="waves-effect waves-light btn white black-text" id="authButton">New Library</a>
+    
     
     <div class="row" id="libraries">
     
@@ -29,7 +37,9 @@
     <?!= include('modals')?>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/js/materialize.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mediaelement/4.2.8/mediaelement-and-player.min.js"></script>
     <?!= include('scripts')?>
+    <?!= include('video')?>
   </body>
 </html>
 

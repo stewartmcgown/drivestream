@@ -1,0 +1,90 @@
+  <script>
+  new MediaElementPlayer('player1', {
+		    success: function (media) {
+
+		        var node = {};
+
+                // Since buttons don't have any media attached, create custom callbacks for them
+                var target = media.closest('.mejs__container').querySelector('.mejs__playpause-button');
+                target.addEventListener('click', function () {
+                    if (this.classList.contains('mejs__play')) {
+			            var nextTime = 0;
+			            getData(nextTime);
+                    } else {
+                        node.source.stop(0);
+                        var event = mejs.Utils.createEvent('pause', media);
+                        media.dispatchEvent(event);
+                    }
+                });
+
+                function getData (nextTime) {
+                    var buffer = null;
+                    var context = new (window.AudioContext || window.webkitAudioContext)();
+                    node.url = media.getSrc();
+                    node.xhr = new XMLHttpRequest();
+                    node.xhr.onload = function(){
+                        node.buf=node.xhr.response;
+                        node.sync=0;
+                        node.retry=0;
+                        decode(node, buffer, context, nextTime);
+                    };
+                    node.xhr.open("GET", "../media/viper.ogg", true);
+                    node.xhr.responseType = "arraybuffer";
+                    node.xhr.send();
+                }
+
+                function syncStream (node) { // should be done by api itself. and hopefully will.
+                    var buf8 = new Uint8Array(node.buf);
+                    buf8.indexOf = Array.prototype.indexOf;
+                    var i=node.sync, b=buf8;
+                    while(1) {
+                        node.retry++;
+                        i = b.indexOf(0xFF,i);
+                        if(i === -1 || (b[i+1] && 0xE0 === 0xE0 )) {
+                        	break;
+			            }
+                        i++;
+                    }
+                    if (i !==- 1) {
+                        var tmp=node.buf.slice(i);
+                        delete(node.buf);
+                        node.buf=null;
+                        node.buf=tmp;
+                        node.sync=i;
+                        return true;
+                    }
+                    return false;
+                }
+
+                function decode(node, buffer, context, nextTime) {
+                    try {
+                        context.decodeAudioData(node.buf,
+                            function(decoded){
+                                buffer = decoded;
+                                node.source  = context.createBufferSource();
+                                node.source.buffer = buffer;
+                                node.source.connect(context.destination);
+
+                                if (nextTime === 0) {
+					                nextTime = context.currentTime + 0.01;
+                                }
+
+                                node.source.start(nextTime);
+                                var event = mejs.Utils.createEvent('play', media);
+                                media.dispatchEvent(event);
+
+                                // Make the next buffer wait the length of the last buffer before being played
+                                nextTime += node.source.buffer.duration;
+                            },
+                            function(){ // only on error attempt to sync on frame boundary
+                                if(syncStream(node)) {
+                                    decode(node);
+                                }
+                            });
+                    } catch(e) {
+                        console.error('decode exception',e.message);
+                    }
+                }
+		    }
+	    });
+</script>
