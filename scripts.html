@@ -193,7 +193,7 @@
      '    <li><a class="media-sd" href="https://drive.google.com/file/d/'+files[i][0]+'/preview" target="_blank"><i class="material-icons">play_arrow</i>SD</a></li>'+
      '    <li><a class="media-hd" data-id="'+files[i][0]+'"><i class="material-icons">play_arrow</i>HD</a></li>'+
      '    <li class="divider"></li>'+
-     '    <li><a href="https://drive.google.com/uc?export=download&id='+files[i][0]+'" target="_blank"><i class="material-icons">file_download</i>Save</a></li>'+
+     '    <li><a class="media-save" data-id="'+files[i][0]+'" target="_blank"><i class="material-icons">file_download</i>Save</a></li>'+
      '  </ul>' +
      '<a class="dropdown-button" data-activates="dropdown_options_'+files[i][0]+'"><i class="material-icons">settings</i></a>'+
      '<ul id="dropdown_options_'+files[i][0]+'" class="dropdown-content">'+
@@ -227,12 +227,27 @@
      //-------------
      $(document).on( 'click', 'a.media-sd', function () {
       var id = $(this).data('id');
-      google.script.run.withSuccessHandler(getHDSuccess).refreshMetadata(id);
+      //google.script.run.withSuccessHandler(getHDSuccess).refreshMetadata(id);
      });
      
      $(document).on( 'click', 'a.media-hd', function () {
       var id = $(this).data('id');
-      google.script.run.withSuccessHandler(getHDSuccess).refreshMetadata(id);
+      
+      google.script.run.withSuccessHandler(appendStream).getDownload(id);
+      
+      function appendStream(stream) {
+        $('body').append("<video width='1920' height='1080' src='"+stream+"'></video>")
+      }
+      
+     });
+     
+     $(document).on( 'click', 'a.media-save', function () {
+      var id = $(this).data('id');
+      google.script.run.withSuccessHandler(relocate).getDownload(id);
+      
+      function relocate(url) {
+        window.location.href = url
+      }
      });
      
      $(document).on("click", "a.hide-item" , function() {
@@ -327,35 +342,5 @@
     
   });
   }
-  
-   $('body').on( 'click', 'a.media-hd', function () {
-     downloadFile($(this).attr("data-id"));
-   });
-  
-  function downloadFile(id) {
-  
-  google.script.run.withSuccessHandler(doDownload).getToken();
-  
-   function doDownload(accessToken) { 
-    var url = 'https://www.googleapis.com/drive/v3/files/'+id+'?alt=media&acknowledgeAbuse=true'
-    console.log(url);
-     google.script.run.withSuccessHandler(makeRequest).withUserObject(accessToken).getDownload(id);
-     
-     function makeRequest(file, accessToken) {
-     
-        $.ajax({
-         url: 'https://www.googleapis.com/drive/v3/files/'+id+'?alt=media&acknowledgeAbuse=true',
-         headers: { 'Authorization' : 'OAuth '+accessToken }
-        });
-     
-        //$('body').prepend('<video src="'+file+'" autoplay>');
-     }
-   }
-   
-   function playHD(url) {
-       $('body').append("<video src='"+url+"'>")
-   }
-   
-   
-  }
+ 
 </script>

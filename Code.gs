@@ -129,7 +129,12 @@ function getToken() {
 }
 
 function getDownload(id) {
-  return Drive.Files.get(id).downloadUrl;
+  var download_url = Drive.Files.get(id).downloadUrl
+  return download_url.substring(0,download_url.length - 8);
+}
+
+function getDownloadtest(){
+  Logger.log(getDownload("1AHknRJt3ta96iH_SVXhSlxHNOZ1VC65S6A")) 
 }
 
 function updateWatchedTime(library, id) {
