@@ -15,7 +15,7 @@ function scanFolder(baseId) {
    
   var pageToken,query,result,count;
   count = Object.keys(folders.items).length;
-  Logger.log("Subfolders:" + count);
+  console.log("Subfolders:" + count);
   
  for (var j = 0; j <=  count; j++) { // for every child folder we found
   for (var i in ext) {
@@ -48,7 +48,7 @@ function scanFolder(baseId) {
    } // end i
  } // j
   
-  Logger.log("Media Files total: " + files.length)
+  console.log("Media Files total: " + files.length)
   
   return files;
  }

@@ -1,0 +1,36 @@
+<!doctype html>
+<html>
+
+<head>
+    <base target="_top">
+    <link href="dist/sass/drivestream.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/css/materialize.min.css" />
+</head>
+
+<body>
+    <div id="drivestream">
+        <nav class="light-blue darken-1">
+            <div class="nav-wrapper">
+                <a href="#!" class="brand-logo center">DriveStream</a>
+                <ul class="left hide-on-med-and-down">
+                    <li class="active"><a href="collapsible.html">Libraries</a></li>
+                </ul>
+            </div>
+        </nav>
+
+        <div class="container">
+            <div class="loading">
+                
+            </div>
+        </div>
+    </div>
+
+    <script>let init = () => { window.app = new DriveStream({ container: "#drivestream" }); app.load() }</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cash/2.3.3/cash.min.js"></script>
+    <script src="dist/app.js"></script>
+    <script async defer src="https://apis.google.com/js/api.js" onload="this.onload=function(){};gapi.load('client:auth2', init)"
+        onreadystatechange="if (this.readyState === 'complete') this.onload()">
+        </script>
+</body>
+
+</html>

@@ -68,7 +68,7 @@ function getLibraries() {
     libraries.push(library);
   }
   
-  Logger.log(libraries)
+  console.log(libraries)
   
   return libraries;
 }
@@ -154,10 +154,10 @@ function scanLibrary(id) {
   
   /*var currentFolder;
   for (var i in ids) {
-    Logger.log(ids[i]);*/
+    console.log(ids[i]);*/
     
     /*if (isTimeUp_(start)) {
-      Logger.log("Execution stopping...");
+      console.log("Execution stopping...");
       break;
     }*/
     
@@ -171,7 +171,7 @@ function scanLibrary(id) {
      var videos = currentFolder.getFilesByType(videos[v]);
      while (videos.hasNext()) {
       var video = videos.next();
-      Logger.log(video.getName());
+      console.log(video.getName());
      }
     }
   }*/
@@ -179,7 +179,7 @@ function scanLibrary(id) {
 
 
 function testMime() {
- Logger.log(DriveApp.getFileById("0B1aXJXlAP0eZb005bHpHak1IZzA").getMimeType()); 
+ console.log(DriveApp.getFileById("0B1aXJXlAP0eZb005bHpHak1IZzA").getMimeType()); 
 }
 
 function getMainDB() {

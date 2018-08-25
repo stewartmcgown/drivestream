@@ -1,17 +1,9 @@
-function doGet() {
-  return HtmlService
-    .createTemplateFromFile('main')
-    .evaluate()
-    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
-    .setTitle("DriveStream")
-}
-
 function getThumb(id) {  
   var result = Drive.Files.get(id);
   
   var data = {id:id, thumb:result.thumbnailLink};
   
-  Logger.log(data);
+  console.log(data);
   return data;
   
   }
@@ -27,9 +19,9 @@ function downloadPoster(link,id) {
   
   var poster = UrlFetchApp.fetch('https://image.tmdb.org/t/p/w154' + link);
   
-  Logger.log(poster.getHeaders());
+  console.log(poster.getHeaders());
   
-  //Logger.log(poster.getContent());
+  //console.log(poster.getContent());
     
   poster = folder.createFile(poster).setName(id + '_poster.jpg');
   
@@ -43,7 +35,7 @@ function getDirectLink(id) {
     pageToken: pageToken1
   });
 
-  Logger.log(request);
+  console.log(request);
 }
                 
 
@@ -65,10 +57,10 @@ function movieAPIRequest(title, year) {
       
   var response = JSON.parse(UrlFetchApp.fetch(url, options).getContentText());
   if (response.total_results == 0) { 
-    Logger.log("Unable to load metadata for " + title);
+    console.log("Unable to load metadata for " + title);
     return;
   }
-  Logger.log("Loaded metadata for " + title);
+  console.log("Loaded metadata for " + title);
   return response.results[0];
 }
 
@@ -105,7 +97,7 @@ function isTimeUp_(start) {
 
 function downloadMovie(id) {
   var authToken = ScriptApp.getOAuthToken();
-  Logger.log(authToken);
+  console.log(authToken);
   
 
     var option = {
@@ -119,12 +111,12 @@ function downloadMovie(id) {
     response = JSON.parse(response);
 
     for (var key in response){
-      Logger.log(key);
+      console.log(key);
     }
 }
 
 function getToken() {
-  Logger.log(ScriptApp.getOAuthToken());
+  console.log(ScriptApp.getOAuthToken());
  return ScriptApp.getOAuthToken();
 }
 
@@ -134,7 +126,7 @@ function getDownload(id) {
 }
 
 function getDownloadtest(){
-  Logger.log(getDownload("1AHknRJt3ta96iH_SVXhSlxHNOZ1VC65S6A")) 
+  console.log(getDownload("1AHknRJt3ta96iH_SVXhSlxHNOZ1VC65S6A")) 
 }
 
 function updateWatchedTime(library, id) {
