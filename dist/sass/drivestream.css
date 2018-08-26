@@ -41,3 +41,15 @@ html, body {
       vertical-align: bottom; }
     #drivestream .button:hover {
       box-shadow: 0 19px 38px rgba(0, 0, 0, 0.3), 0 15px 12px rgba(0, 0, 0, 0.22); }
+  #drivestream .mediaItems .media-card {
+    height: 350px;
+    border-radius: 4px; }
+    #drivestream .mediaItems .media-card a.card-url {
+      color: #000; }
+    #drivestream .mediaItems .media-card .card-content {
+      padding: 12px; }
+      #drivestream .mediaItems .media-card .card-content .card-title {
+        font-size: 1rem;
+        font-weight: 700;
+        line-height: inherit;
+        color: #000; }

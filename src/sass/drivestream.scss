@@ -63,4 +63,23 @@ html, body {
       box-shadow: $BoxShadowHeavy
     }
   }
+
+  .mediaItems { 
+    .media-card {
+      height: 350px;
+      border-radius: 4px;
+      a.card-url {
+        color: #000;
+      }
+      .card-content {
+        padding: 12px;
+        .card-title{
+          font-size: 1rem;
+          font-weight: 700;
+          line-height: inherit;
+          color: #000;
+                }
+      }
+    }
+  }
 }

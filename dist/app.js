@@ -1,15 +1,14 @@
 const API_KEY = "AIzaSyA5jzWRF3xGOHLq63ptF3VWOUokXUVOz5U"
 const CLIENT_ID = "719757025459-da3v6ad3pte923qd2c8ue96bh3m5mofm.apps.googleusercontent.com"
-const DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"];
-const SCOPES = 'https://www.googleapis.com/auth/drive';
+const DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest", "https://sheets.googleapis.com/$discovery/rest?version=v4"];
+const SCOPES = 'https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/spreadsheets';
 
 let sleep = (time) => { return new Promise((resolve) => setTimeout(resolve, time)); }
 
 class DriveStream {
     constructor(options) {
-        this.containers = {
-            loading: $("#drivestream .loading")
-        }
+        this.ui = new UI(this)
+        this.libraries = []
     }
 
     set isFirstTime(a) {
@@ -29,16 +28,18 @@ class DriveStream {
             'client_id': CLIENT_ID,
             'immediate': false,
             'scope': SCOPES
-        }, () => {
+        }, async () => {
             that.isFirstTime = false
-            that.hideSignIn()
+            that.ui.hideSignIn()
+            await that.initiateClient()
+            that.getLibraries()
             console.log("Loaded API")
         })
     }
 
     load() {
         if (this.isFirstTime) {
-            this.showSignIn()
+            this.ui.showSignIn()
         } else {
             this.loadDriveAPI()
         }
@@ -53,86 +54,239 @@ class DriveStream {
         })
     }
 
-    showSignIn() {
-        this.containers.loading.html(Components.signIn())
-    }
-
-    hideSignIn() {
-        this.containers.loading.remove()
-    }
-
-    showLibraryScan() {
-        this.containers.loading.html(Components.scanLibraryButton())
-    }
-
-    getLibraries() {
-        this.initiateClient().then(() => {
-            gapi.client.drive.files.list({
-                'q': `properties has {key='drivestream_type' and value='library'}`,
-                'spaces': 'drive',
-                'fields': "nextPageToken,files(id,name)",
-                'pageSize': 1000
-            })    
+    /**
+     * Creates a remote library from a Library object
+     * @param {Library} library 
+     */
+    createLibrary(library) {
+        gapi.client.sheets.spreadsheets.create({}, {
+            "properties": {
+                "title": library.name
+            }
+        }).then((sheets) => {
+            gapi.client.drive.files.update({
+                'fileId': sheets.result.spreadsheetId,
+                'removeParents': 'root',
+                'fields': 'id, name, properties',
+                'resource': { "properties": [{ "drivestream": "library" }] }
+            }).then((r) => {
+                gapi.client.drive.files.update({
+                    'fileId': sheets.result.spreadsheetId,
+                    'fields': 'id, name, properties',
+                    'resource': { "properties": [{ "root": library.root }] }
+                }).then((r) => {
+                    console.log(r)
+                    this.getLibraries()
+                })
+            })
         })
     }
 
+    /**
+     * Batch update a remote library
+     * @param {Library} library 
+     */
+    updateLibrary(library) {
+
+    }
+
+    /**
+     * Set the current libraries
+     * @param {Library[]} libraries 
+     */
+    setLibraries(libraries) {
+        this.libraries = []
+        for (let l of libraries) {
+            this.libraries.push(new Library(l, this))
+        }
+
+        this.ui.showLibraries()
+    }
+
+    async getLibraries() {
+        gapi.client.drive.files.list({
+            'q': `properties has {key='drivestream' and value='library'} and trashed = false`,
+            'spaces': 'drive',
+            'fields': "nextPageToken,files(id,name,properties)",
+            'pageSize': 1000
+        }).then((response) => {
+            this.setLibraries(response.result.files)
+        })
+    }
+
+    getLibrary(library) {
+        this.activeLibrary = library
+        return gapi.client.sheets.spreadsheets.values.get({
+            spreadsheetId: library.id,
+            range: "A2:Z"
+        }).then((response) => {
+            library.mediaItems = response.result.values.map(row => new MediaItem(row))
+            this.ui.emptyMediaItems()
+            for (let l of library.mediaItems)
+                this.ui.showMediaItem(l)
+        })
+    }
+
+    refreshLibrary(library) {
+        let l = this.libraries.find(o => o.id == library.id)
+        l.refresh()
+    }
 }
 class Library {
     /**
      * Creates a library object
      * @param {object} options 
      */
-    constructor(options) {
-        
+    constructor(options, drivestream) {
+        this.id = options.id
+        this.name = options.name
+        this.type = options.type
+        this.root = options.properties.root
+
+        this.mediaItems = []
+
+        this.drivestream = drivestream
+
+        this.scanner = new MediaScanner(this, this.drivestream)
+
     }
 
-    create() {
+    refresh() {
+        this.scanner.scan()
+    }
 
+    updateMediaItems() {
+        this.mediaItems = this.scanner.mediaItems
+        let payload = this.mediaItems.map(m => Object.values(m))
+        gapi.client.sheets.spreadsheets.values.batchUpdate({
+            "spreadsheetId": this.id,
+            "resource": {
+                "valueInputOption": 'RAW',
+                "data": [
+                    {
+                        "range": "A2:Z",
+                        "values": payload
+                    }
+                ]
+            }
+        }).then(r => console.log(r))
     }
 }
 class MediaItem {
     /**
      * Creates a media item
-     * @param {google.drive.File} file Drive file
+     * @param {google.drive.File} file Drive file OR a row
      */
     constructor(file) {
-        this.id = file.id
-        this.fileName = file.name
-        this.videoMediaMetadata_ = file.videoMediaMetadata
-        this.thumb = file.thumbnailLink
-        this.size = file.fileSize
+        let a = file.constructor === Array
+
+        this.id = a ? file[0] : file.id
+        this.name = a ? file[1] : MediaItem.getTitle(file.name)
+        this.durationMillis = a ? Number.parseInt(file[2]) : file.videoMediaMetadata.durationMillis
+        this.width = a ? Number.parseInt(file[4]) : file.videoMediaMetadata.width
+        this.height = a ? Number.parseInt(file[3]) : file.videoMediaMetadata.height
+        this.thumb = a ? file[5] : file.thumbnailLink
+        this.size = a ? file[6] : file.size
+        this.year = a ? file[7] : MediaItem.getYear(file.name)
+        this.description = a ? file[8] : undefined
+        this.poster_ = a ? file[9] : undefined
+
+        /*this.videoMediaMetadata_ = a ? {
+            durationMillis: Number.parseInt(file[2]),
+            height: Number.parseInt(file[3]),
+            width: Number.parseInt(file[4])
+        } : file.videoMediaMetadata */
     }
 
-    get year() {
-        let patt = /[^0-9](19|20)[0-9]{2}[^0-9]/, 
-            match = patt.exec(this.fileName)
+    static getYear(title) {
+        if (this.year_)
+            return this.year_
+
+        let patt = /[^0-9](19|20)[0-9]{2}[^0-9]/,
+            match = patt.exec(title)
 
         if (match == null) return null
         else return match[0].split('.').join('')
     }
 
-    get title() {
-        let name = this.fileName.split('.').join(' '), 
-            patt = /[^0-9](19|20)[0-9]{2}[^0-9]/, 
-            match = patt.exec(name)
+    static getTitle(title) {
+        if (this.title_)
+            return this.title_
+
+        let name = title.split('.').join(' '),
+            patt = /[^0-9](19|20)[0-9]{2}[^0-9]/,
+            match = patt.exec(title)
         if (match)
-            return name.substr(0, match.index)
+            return name.substr(0, match.index).trim()
         else
             return null
     }
 
+    get title() {
+        return this.name
+    }
+
+    /**
+     * Returns a link to the thumbnail
+     * 
+     * https://drive.google.com/thumbnail?authuser=0&sz=w546-h585-p-k-nu&id=1F05ZRe390FeklNnveX3I-cTeSPnN7TOyFg
+     * 
+     * @param {Object} options {
+     *      width: Number,
+     *      height: Number,
+     *      aspect: Boolean,
+     *      crop: Boolean
+     * }
+     */
+    getThumbSize(options) {
+        // Util: Appends parameter to list of parameters
+        let append = (s, v) => {
+            if (params.length > 0)
+                params+="-"
+
+            params += s
+
+            if (v)
+                params += v
+        }
+
+        let params = ""
+
+        if (options.crop && !options.height)
+            options.height = options.width
+
+        options.width && append("w", Math.floor(options.width))
+        options.height && append("h", Math.floor(options.height))
+        options.crop && append("p-k-nu")
+        options.aspect && append("no")
+
+        return `https://drive.google.com/thumbnail?authuser=0&id=${this.id}&sz=${params}`
+        
+    }
+
+    get playbackUrl() {
+        return `https://drive.google.com/file/d/${this.id}/preview`
+    }
+
+    get poster() {
+        if (this.poster_)
+            return `https://image.tmdb.org/t/p/w400${this.poster_}`
+        else
+            return this.getThumbSize({width: 800, crop: true})
+    }
+
     get duration() {
         return {
-            millis: this.videoMediaMetadata_.durationMillis,
-            formatted: Utils.millisToDate(this.videoMediaMetadata_.durationMillis)
+            millis: this.durationMillis,
+            formatted: Utils.millisToDate(this.durationMillis)
         }
     }
 
     get resolution() {
         return {
-            height: this.videoMediaMetadata_.height,
-            width: this.videoMediaMetadata_.width,
-            formatted: `${this.videoMediaMetadata_.width}x${this.videoMediaMetadata_.height}`
+            height: this.height,
+            width: this.width,
+            formatted: `${this.width}x${this.height}`
         }
     }
 
@@ -148,21 +302,22 @@ class MediaScanner {
      * @param {string} type Type of media
      * @param {DriveStream.Library} library A library 
      */
-    constructor(id, type, library, drivestream) {
-        this.root = id
-        this.type = type
-        this.library = library
+    constructor(library, drivestream) {
+        this.root = library.root
+        this.type = library.type
 
+        this.library = library
         this.drivestream = drivestream
 
         this.activeRequests = 0
+        this.queuedRequests = 0
         this.isScanning_ = false
         this.mediaItems = []
 
         this.PAGE_SIZE = 1000
         this.MAX_ITEMS = 0
         
-        this.UNSUPPORTED_FILE_TYPES = ["video/mp2t"]
+        this.UNSUPPORTED_FILE_TYPES = ["video/mp2t", "video/ts"]
     }
 
     get isScanning() {
@@ -171,6 +326,15 @@ class MediaScanner {
 
     set isScanning(isScanning) {
         this.isScanning_ = isScanning
+
+        if (!this.isScanning_) {
+            toast({content: `Finished scanning ${this.type} library in ${this.root}`})
+            this.library.updateMediaItems()
+        }
+    }
+
+    addMediaItem(mediaItem) {
+        this.mediaItems.push(mediaItem)
     }
 
     scan() {
@@ -184,7 +348,7 @@ class MediaScanner {
             if (m.mimeType == "application/vnd.google-apps.folder") {
                 this.recusriveListFolder(m.id)
             } else if (m.mimeType.includes("video/") && !this.UNSUPPORTED_FILE_TYPES.includes(m.mimeType)) {
-                this.mediaItems.push(new MediaItem(m))
+                this.addMediaItem(new MediaItem(m))
             }
             
         }        
@@ -196,7 +360,7 @@ class MediaScanner {
             if (s.length > 0)
                 s += " "
 
-            s += `mimeType contains ${mime}`
+            s += `mimeType contains '${mime}'`
 
             if (i != (this.UNSUPPORTED_FILE_TYPES.length - 1))
                 s += " or"
@@ -205,13 +369,19 @@ class MediaScanner {
     }
 
     async recusriveListFolder(root, nextPageToken) {
+        this.isScanning = true
         while (this.activeRequests >= 3) {
-            await sleep(200)
+            this.queuedRequests++
+            await sleep(250)
+            this.queuedRequests--
         }
+        
+            
 
         this.activeRequests++
-        this.drivestream.initiateClient().then(gapi.client.drive.files.list({
-            'q': `'${root}' in parents and not ${this.printUnsupportedMimeTypes()}`,
+
+        await this.drivestream.initiateClient().then(() => gapi.client.drive.files.list({
+            'q': `'${root}' in parents and not (${this.printUnsupportedMimeTypes()}) and not (name contains 'sample')`,
             'spaces': 'drive',
             'fields': "nextPageToken,files(id,name,size,mimeType,videoMediaMetadata,thumbnailLink)",
             'pageToken': nextPageToken,
@@ -226,19 +396,39 @@ class MediaScanner {
 
                 if (response.result.nextPageToken) {
                     this.recusriveListFolder(root, response.result.nextPageToken)
-                } else if (!response.result.nextPageToken)
+                } else if (!response.result.nextPageToken && this.activeRequests == 0 && this.queuedRequests == 0)
                     this.isScanning = false
             }
+
         })
     }
 }
 
 
+class MetadataEngine {
+    constructor(mediaItem) {
+        this.mediaItem = mediaItem
+    }
+
+    getMetadata() {
+        year ? year : "" // Fix null year
+
+        let url = `https://api.themoviedb.org/3/search/movie?include_adult=false&page=1&query=${title}&language=en-US&api_key=42e5714f80280415f205eca7e2cb61dd&year=${year}`,
+        response = JSON.parse(UrlFetchApp.fetch(url, options).getContentText());
+
+        if (response.total_results == 0) {
+            console.log(`Unable to load metadata for ${this.title}`);
+            return;
+        }
+
+        console.log(response.results[0])
+    }
+}
 /**
  * A library of dynamic, reusable components
  */
 class Components {
-    static signIn(message="Sign in with Google") {
+    static signIn(message = "Sign in with Google") {
         return `
         <div class="sign-in-container">
         <div class="sign-in-inner">
@@ -252,7 +442,94 @@ class Components {
             </div>
         `
     }
+
+    static mediaItem(mediaItem) {
+        return `<div class="col s2">
+                <a href="${mediaItem.playbackUrl}" class="card-url" target="_blank">
+                    <div class="card vertical media-card" id="${mediaItem.id}">
+                        <div class="card-image">
+                            <img src="${mediaItem.poster}" class="media-image">
+                        </div>
+                        <div class="card-content">
+                            <div class="card-title">${mediaItem.name}</div>
+                        </div>
+                    </div>
+                </a>
+            </div>`
+    }
 }
+
+class UI {
+    constructor(drivestream) {
+        this.drivestream = drivestream
+        this.containers = {
+            loading: $("#drivestream .loading"),
+            libraries: $("#drivestream .libraries"),
+            media: $("#drivestream .mediaItems")
+        }
+
+
+    }
+
+    showSignIn() {
+        this.containers.loading.html(Components.signIn())
+    }
+
+    hideSignIn() {
+        this.containers.loading.remove()
+    }
+
+    showLibraryScan() {
+        this.containers.loading.html(Components.scanLibraryButton())
+    }
+
+    showLibraries() {
+        this.containers.libraries.empty();
+        for (let library of this.drivestream.libraries) {
+            this.containers.libraries.append(`
+                 <div class="col s4"> 
+                   <div class="card"> 
+                     <div class="card-content" 
+                       <span class="card-title">${library.name}</span> 
+                     </div> 
+                      <div class="card-action"> 
+                       <a href="#" data-library-id="${library.id}" data-library-name="${library.name}" class="openLibrary">Open</a> 
+                       <a href="#" data-library-id="${library.id}" data-library-name="${library.name}" class="refreshLibrary">Refresh</a> 
+                      </div> 
+                    </div> 
+                 </div>
+            `);
+        }
+
+        let that = this
+
+        $("a.openLibrary").on('click', function () {
+            that.drivestream.getLibrary({ id: $(this).attr("data-library-id") })
+        })
+
+        $("a.refreshLibrary").on('click', function () {
+            that.drivestream.refreshLibrary({ id: $(this).attr("data-library-id") })
+        })
+    }
+
+    emptyMediaItems() {
+        this.containers.media.empty()
+    }
+
+    /**
+     * 
+     * @param {MediaItem} mediaItem 
+     */
+    showMediaItem(mediaItem) {
+        if (mediaItem.name == "")
+            return
+
+        this.containers.media.append(Components.mediaItem(mediaItem))
+
+    }
+
+}
+
 class Utils {
     /**
      * Convert a number of milliseconds into a human readable

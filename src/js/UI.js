@@ -2,7 +2,7 @@
  * A library of dynamic, reusable components
  */
 class Components {
-    static signIn(message="Sign in with Google") {
+    static signIn(message = "Sign in with Google") {
         return `
         <div class="sign-in-container">
         <div class="sign-in-inner">
@@ -16,4 +16,90 @@ class Components {
             </div>
         `
     }
+
+    static mediaItem(mediaItem) {
+        return `<div class="col s2">
+                <a href="${mediaItem.playbackUrl}" class="card-url" target="_blank">
+                    <div class="card vertical media-card" id="${mediaItem.id}">
+                        <div class="card-image">
+                            <img src="${mediaItem.poster}" class="media-image">
+                        </div>
+                        <div class="card-content">
+                            <div class="card-title">${mediaItem.name}</div>
+                        </div>
+                    </div>
+                </a>
+            </div>`
+    }
+}
+
+class UI {
+    constructor(drivestream) {
+        this.drivestream = drivestream
+        this.containers = {
+            loading: $("#drivestream .loading"),
+            libraries: $("#drivestream .libraries"),
+            media: $("#drivestream .mediaItems")
+        }
+
+
+    }
+
+    showSignIn() {
+        this.containers.loading.html(Components.signIn())
+    }
+
+    hideSignIn() {
+        this.containers.loading.remove()
+    }
+
+    showLibraryScan() {
+        this.containers.loading.html(Components.scanLibraryButton())
+    }
+
+    showLibraries() {
+        this.containers.libraries.empty();
+        for (let library of this.drivestream.libraries) {
+            this.containers.libraries.append(`
+                 <div class="col s4"> 
+                   <div class="card"> 
+                     <div class="card-content" 
+                       <span class="card-title">${library.name}</span> 
+                     </div> 
+                      <div class="card-action"> 
+                       <a href="#" data-library-id="${library.id}" data-library-name="${library.name}" class="openLibrary">Open</a> 
+                       <a href="#" data-library-id="${library.id}" data-library-name="${library.name}" class="refreshLibrary">Refresh</a> 
+                      </div> 
+                    </div> 
+                 </div>
+            `);
+        }
+
+        let that = this
+
+        $("a.openLibrary").on('click', function () {
+            that.drivestream.getLibrary({ id: $(this).attr("data-library-id") })
+        })
+
+        $("a.refreshLibrary").on('click', function () {
+            that.drivestream.refreshLibrary({ id: $(this).attr("data-library-id") })
+        })
+    }
+
+    emptyMediaItems() {
+        this.containers.media.empty()
+    }
+
+    /**
+     * 
+     * @param {MediaItem} mediaItem 
+     */
+    showMediaItem(mediaItem) {
+        if (mediaItem.name == "")
+            return
+
+        this.containers.media.append(Components.mediaItem(mediaItem))
+
+    }
+
 }

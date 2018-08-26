@@ -8,21 +8,22 @@ class MediaScanner {
      * @param {string} type Type of media
      * @param {DriveStream.Library} library A library 
      */
-    constructor(id, type, library, drivestream) {
-        this.root = id
-        this.type = type
-        this.library = library
+    constructor(library, drivestream) {
+        this.root = library.root
+        this.type = library.type
 
+        this.library = library
         this.drivestream = drivestream
 
         this.activeRequests = 0
+        this.queuedRequests = 0
         this.isScanning_ = false
         this.mediaItems = []
 
         this.PAGE_SIZE = 1000
         this.MAX_ITEMS = 0
         
-        this.UNSUPPORTED_FILE_TYPES = ["video/mp2t"]
+        this.UNSUPPORTED_FILE_TYPES = ["video/mp2t", "video/ts"]
     }
 
     get isScanning() {
@@ -31,6 +32,15 @@ class MediaScanner {
 
     set isScanning(isScanning) {
         this.isScanning_ = isScanning
+
+        if (!this.isScanning_) {
+            toast({content: `Finished scanning ${this.type} library in ${this.root}`})
+            this.library.updateMediaItems()
+        }
+    }
+
+    addMediaItem(mediaItem) {
+        this.mediaItems.push(mediaItem)
     }
 
     scan() {
@@ -44,7 +54,7 @@ class MediaScanner {
             if (m.mimeType == "application/vnd.google-apps.folder") {
                 this.recusriveListFolder(m.id)
             } else if (m.mimeType.includes("video/") && !this.UNSUPPORTED_FILE_TYPES.includes(m.mimeType)) {
-                this.mediaItems.push(new MediaItem(m))
+                this.addMediaItem(new MediaItem(m))
             }
             
         }        
@@ -56,7 +66,7 @@ class MediaScanner {
             if (s.length > 0)
                 s += " "
 
-            s += `mimeType contains ${mime}`
+            s += `mimeType contains '${mime}'`
 
             if (i != (this.UNSUPPORTED_FILE_TYPES.length - 1))
                 s += " or"
@@ -65,13 +75,19 @@ class MediaScanner {
     }
 
     async recusriveListFolder(root, nextPageToken) {
+        this.isScanning = true
         while (this.activeRequests >= 3) {
-            await sleep(200)
+            this.queuedRequests++
+            await sleep(250)
+            this.queuedRequests--
         }
+        
+            
 
         this.activeRequests++
-        this.drivestream.initiateClient().then(gapi.client.drive.files.list({
-            'q': `'${root}' in parents and not ${this.printUnsupportedMimeTypes()}`,
+
+        await this.drivestream.initiateClient().then(() => gapi.client.drive.files.list({
+            'q': `'${root}' in parents and not (${this.printUnsupportedMimeTypes()}) and not (name contains 'sample')`,
             'spaces': 'drive',
             'fields': "nextPageToken,files(id,name,size,mimeType,videoMediaMetadata,thumbnailLink)",
             'pageToken': nextPageToken,
@@ -86,9 +102,10 @@ class MediaScanner {
 
                 if (response.result.nextPageToken) {
                     this.recusriveListFolder(root, response.result.nextPageToken)
-                } else if (!response.result.nextPageToken)
+                } else if (!response.result.nextPageToken && this.activeRequests == 0 && this.queuedRequests == 0)
                     this.isScanning = false
             }
+
         })
     }
 }
