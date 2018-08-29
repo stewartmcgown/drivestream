@@ -10,31 +10,132 @@ class Library {
         this.root = options.properties.root
 
         this.mediaItems = []
+        this.pushQueue = []
+        this.pushCount = 0
+        this.lastPush = null
 
         this.drivestream = drivestream
 
         this.scanner = new MediaScanner(this, this.drivestream)
 
+        this.SHEET_EXPIRY = 100000
+
     }
 
-    refresh() {
+    update() {
+        this.drivestream.ui.setScanning(this)
         this.scanner.scan()
     }
 
     updateMediaItems() {
         this.mediaItems = this.scanner.mediaItems
-        let payload = this.mediaItems.map(m => Object.values(m))
+        let payload = this.mediaItems.map(m => m.toRow())
         gapi.client.sheets.spreadsheets.values.batchUpdate({
             "spreadsheetId": this.id,
             "resource": {
                 "valueInputOption": 'RAW',
                 "data": [
                     {
-                        "range": "A2:Z",
+                        "range": "A:Z",
                         "values": payload
                     }
                 ]
             }
         }).then(r => console.log(r))
+    }
+
+    /**
+     * Push changes from a mediaItem to the database
+     * @param {MediaItem} mediaItem 
+     */
+    updateRemoteItem(mediaItem) {
+        // Get the row containing the media item
+        this.getRemoteSheet().then((response) => {
+            let selected = response.result.values.findIndex((mediaItems) => {
+                return mediaItems[0] == mediaItem.id
+            }) + 1 // Accounts for row/sheet incompatibility
+
+            this.pushToRange([mediaItem.toRow()], `A${selected}:Z${selected}`)
+        })
+    }
+
+    async getRemoteSheet() {
+
+        if (!this.cachedSheet || !this.sheetFetchedDate) {
+            return this.doRemoteSheetRequest()
+        } else if ((new Date().getTime() - this.sheetFetchedDate.getTime()) > this.SHEET_EXPIRY) {
+            return this.doRemoteSheetRequest()
+        } else {
+            return this.cachedSheet
+        }
+    }
+
+    doRemoteSheetRequest() {
+        return (gapi.client.sheets.spreadsheets.values.get({
+            spreadsheetId: this.id,
+            range: "A:Z"
+        }).then((response) => {
+            this.cachedSheet = response
+            this.sheetFetchedDate = new Date()
+            return response;
+        }))
+    }
+
+    pushToRange(values, range) {
+
+        let body = {
+            "values": values
+        }
+
+        gapi.client.sheets.spreadsheets.values.update({
+            spreadsheetId: this.id,
+            range: range,
+            valueInputOption: "RAW",
+            resource: body
+        }).then((response) => {
+            var result = response.result;
+            console.log(`${result.updatedCells} cells updated.`);
+        });
+    }
+
+    /**
+     * Handles queue of write to sheet.
+     * If 
+     */
+    async pushQueue() {
+        if (!this.lastPush)
+            this.lastPush = new Date() // Handle null lastpush
+        while ((new Date().getTime() - this.lastPush.getTime()) < 100000) { // while not 100s elapsed since most recent push
+            await sleep(100)
+        }
+
+        let params = {
+            spreadsheetId: 'my-spreadsheet-id',  // TODO: Update placeholder value.
+        };
+
+        let batchUpdateValuesRequestBody = {
+            // How the input data should be interpreted.
+            valueInputOption: 'RAW',
+
+            // The new values to apply to the spreadsheet.
+            data: [],
+
+            // TODO: Add desired properties to the request body.
+        };
+
+        let request = gapi.client.sheets.spreadsheets.values.batchUpdate(params, batchUpdateValuesRequestBody);
+        request.then(function (response) {
+            // TODO: Change code below to process the `response` object:
+            console.log(response.result);
+        }, function (reason) {
+            console.error('error: ' + reason.result.error.message);
+        });
+
+    }
+
+    refreshMeta() {
+        for (let m of this.mediaItems) {
+            this.drivestream.metadataEngine.getMetadata(m)
+        }
     }
 }

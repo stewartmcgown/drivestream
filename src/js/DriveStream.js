@@ -9,6 +9,7 @@ class DriveStream {
     constructor(options) {
         this.ui = new UI(this)
         this.libraries = []
+        this.metadataEngine = new MetadataEngine()
     }
 
     set isFirstTime(a) {
@@ -114,21 +115,31 @@ class DriveStream {
         })
     }
 
-    getLibrary(library) {
+    findLibraryById(id) {
+        return this.libraries.find((l) => { return l.id == id })
+    }
+
+    getLibrary(id) {
+        let library = this.findLibraryById(id)
         this.activeLibrary = library
         return gapi.client.sheets.spreadsheets.values.get({
             spreadsheetId: library.id,
-            range: "A2:Z"
+            range: "A:Z"
         }).then((response) => {
-            library.mediaItems = response.result.values.map(row => new MediaItem(row))
+            library.mediaItems = response.result.values.map(row => new MediaItem(row, library))
             this.ui.emptyMediaItems()
             for (let l of library.mediaItems)
                 this.ui.showMediaItem(l)
         })
     }
 
-    refreshLibrary(library) {
-        let l = this.libraries.find(o => o.id == library.id)
-        l.refresh()
+    updateLibrary(id) {
+        let library = this.findLibraryById(id)
+        library.update()
+    }
+
+    refreshMetaLibrary(id) {
+        let library = this.findLibraryById(id)
+        library.refreshMeta()
     }
 }

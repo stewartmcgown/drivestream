@@ -34,7 +34,7 @@ class MediaScanner {
         this.isScanning_ = isScanning
 
         if (!this.isScanning_) {
-            toast({content: `Finished scanning ${this.type} library in ${this.root}`})
+            //toast({content: `Finished scanning ${this.type} library in ${this.root}`})
             this.library.updateMediaItems()
         }
     }
@@ -46,6 +46,8 @@ class MediaScanner {
     scan() {
         this.isScanning = true
 
+        //this.ui.setScanning({})
+
         this.recusriveListFolder(this.root)
     }
 
@@ -54,7 +56,7 @@ class MediaScanner {
             if (m.mimeType == "application/vnd.google-apps.folder") {
                 this.recusriveListFolder(m.id)
             } else if (m.mimeType.includes("video/") && !this.UNSUPPORTED_FILE_TYPES.includes(m.mimeType)) {
-                this.addMediaItem(new MediaItem(m))
+                this.addMediaItem(new MediaItem(m, this.library))
             }
             
         }        

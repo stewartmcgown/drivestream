@@ -46,10 +46,15 @@ html, body {
     border-radius: 4px; }
     #drivestream .mediaItems .media-card a.card-url {
       color: #000; }
+    #drivestream .mediaItems .media-card .card-image {
+      overflow: hidden; }
+      #drivestream .mediaItems .media-card .card-image img {
+        transition: transform .5s; }
     #drivestream .mediaItems .media-card .card-content {
       padding: 12px; }
       #drivestream .mediaItems .media-card .card-content .card-title {
         font-size: 1rem;
         font-weight: 700;
         line-height: inherit;
-        color: #000; }
+        color: #000;
+        text-transform: capitalize; }

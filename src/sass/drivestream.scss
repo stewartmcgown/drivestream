@@ -65,11 +65,26 @@ html, body {
   }
 
   .mediaItems { 
+    .col {
+      &:hover {
+        img {
+         }
+      }
+    }
     .media-card {
       height: 350px;
       border-radius: 4px;
+      
       a.card-url {
         color: #000;
+      }
+      .card-image {
+        
+        overflow: hidden;
+
+        img {
+          transition: transform .5s;
+        }
       }
       .card-content {
         padding: 12px;
@@ -78,6 +93,7 @@ html, body {
           font-weight: 700;
           line-height: inherit;
           color: #000;
+          text-transform: capitalize;
                 }
       }
     }
