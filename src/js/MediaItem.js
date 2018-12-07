@@ -1,5 +1,5 @@
-import { Parser } from "parse-torrent-title"
-
+import Parser from "parse-torrent-title"
+import { millisToDate } from "./Utils"
 export default class MediaItem {
 	/**
 	 * Creates a media item
@@ -33,7 +33,7 @@ export default class MediaItem {
 	static getYear(title) {
 		if (this.year_) return this.year_
 
-		return titleParser.parse(title).year
+		return Parser.parse(title).year
 	}
 
 	/**
@@ -43,7 +43,7 @@ export default class MediaItem {
 	static getTitle(title) {
 		if (this.title_) return this.title_
 
-		return titleParser.parse(title).title
+		return Parser.parse(title).title
 	}
 
 	get year() {
@@ -99,7 +99,8 @@ export default class MediaItem {
 	get duration() {
 		return {
 			millis: this.durationMillis,
-			formatted: Utils.millisToDate(this.durationMillis)
+
+			formatted: millisToDate(this.durationMillis)
 		}
 	}
 

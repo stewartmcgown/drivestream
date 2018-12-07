@@ -1,3 +1,6 @@
+import Components from "./Components"
+require("../sass/drivestream.scss")
+
 export default class UI {
 	constructor(drivestream) {
 		this.drivestream = drivestream
@@ -6,6 +9,12 @@ export default class UI {
 			libraries: $("#drivestream .libraries"),
 			media: $("#drivestream .mediaItems")
 		}
+
+		this.setEvents()
+	}
+
+	setEvents() {
+		document.querySelector("#nav-search").addEventListener("keyup", e => {})
 	}
 
 	showSignIn() {
@@ -38,6 +47,10 @@ export default class UI {
 
 		$("a.refreshMetaLibrary").on("click", function() {
 			that.drivestream.refreshMetaLibrary($(this).attr("data-library-id"))
+		})
+
+		$("a.deleteLibrary").on("click", function() {
+			that.drivestream.deleteLibrary($(this).attr("data-library-id"))
 		})
 	}
 

@@ -1,16 +1,15 @@
-const API_KEY = "AIzaSyA5jzWRF3xGOHLq63ptF3VWOUokXUVOz5U"
-const CLIENT_ID =
-	"719757025459-da3v6ad3pte923qd2c8ue96bh3m5mofm.apps.googleusercontent.com"
-const DISCOVERY_DOCS = [
+import MetadataEngine from "./MetadataEngine"
+import Library from "./Library"
+import MediaItem from "./MediaItem"
+import UI from "./UI"
+import credentials from "../../credentials"
+
+export const DISCOVERY_DOCS = [
 	"https://www.googleapis.com/discovery/v1/apis/drive/v3/rest",
 	"https://sheets.googleapis.com/$discovery/rest?version=v4"
 ]
-const SCOPES =
+export const SCOPES =
 	"https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/spreadsheets"
-
-let sleep = time => {
-	return new Promise(resolve => setTimeout(resolve, time))
-}
 
 export default class DriveStream {
 	constructor(options) {
@@ -163,5 +162,12 @@ export default class DriveStream {
 	refreshMetaLibrary(id) {
 		let library = this.findLibraryById(id)
 		library.refreshMeta()
+	}
+
+	deleteLibrary(id) {
+		let library = this.findLibraryById(id)
+		gapi.client.drive.files
+			.update({ fileId: library.id, resource: { trashed: true } })
+			.then(r => this.getLibraries())
 	}
 }

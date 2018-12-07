@@ -2,12 +2,11 @@
 <html>
 	<head>
 		<base target="_top" />
-		<link href="dist/sass/drivestream.css" rel="stylesheet" />
+		<link href="dist/main.css" rel="stylesheet" />
 		<link
 			rel="stylesheet"
 			href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0-rc.2/css/materialize.min.css"
 		/>
-		<link rel="stylesheet" href="dist/tc/tc-toast.css" />
 		<link
 			media="none"
 			onload="if(media!='all')media='all'"
@@ -29,6 +28,18 @@
 					<a href="#!" class="brand-logo center">DriveStream</a>
 					<ul class="left hide-on-med-and-down">
 						<li class="active"><a href="#!">Libraries</a></li>
+						<li><a href="#!">+</a></li>
+						<li>
+							<div class="input-field" id="nav-search">
+								<i class="material-icons prefix">search</i>
+								<input
+									type="text"
+									placeholder="search"
+									id="autocomplete-input"
+									class="autocomplete white-text"
+								/>
+							</div>
+						</li>
 					</ul>
 				</div>
 			</nav>
@@ -36,9 +47,9 @@
 			<div class="container">
 				<div class="loading"></div>
 
-				<div class="libraries row"></div>
+				<div class="libraries"></div>
 
-				<div class="mediaItems row"></div>
+				<div class="mediaItems"></div>
 			</div>
 		</div>
 
@@ -48,9 +59,7 @@
 			src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"
 			type="text/javascript"
 		></script>
-		<script src="dist/tc/tc-simpletoast.js" type="text/javascript"></script>
-		<script src="dist/parser.js" type="text/javascript"></script>
-		<script src="dist/app.js" type="text/javascript"></script>
+		<script src="dist/bundle.js" type="text/javascript"></script>
 		<script
 			async
 			defer

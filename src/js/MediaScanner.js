@@ -1,3 +1,7 @@
+import { sleep } from "./Utils"
+import MediaItem from "./MediaItem"
+import Library from "./Library"
+
 /**
  * Scans a folder for media files and organises them appropriately
  */
@@ -6,7 +10,7 @@ export default class MediaScanner {
 	 *
 	 * @param {string} id Id of root folder
 	 * @param {string} type Type of media
-	 * @param {DriveStream.Library} library A library
+	 * @param {Library} library A library
 	 */
 	constructor(library, drivestream) {
 		this.root = library.root
@@ -18,6 +22,7 @@ export default class MediaScanner {
 		this.activeRequests = 0
 		this.queuedRequests = 0
 		this.isScanning_ = false
+		/** @type {MediaItem} */
 		this.mediaItems = []
 
 		this.PAGE_SIZE = 1000
@@ -39,6 +44,10 @@ export default class MediaScanner {
 		}
 	}
 
+	/**
+	 *
+	 * @param {MediaItem} mediaItem
+	 */
 	addMediaItem(mediaItem) {
 		this.mediaItems.push(mediaItem)
 	}
@@ -52,13 +61,13 @@ export default class MediaScanner {
 	}
 
 	processMediaFileList(list) {
-		console.log(list)
 		for (let m of list) {
 			if (m.mimeType == "application/vnd.google-apps.folder") {
 				this.recusriveListFolder(m.id)
 			} else if (
 				m.mimeType.includes("video/") &&
-				!this.UNSUPPORTED_FILE_TYPES.includes(m.mimeType)
+				!this.UNSUPPORTED_FILE_TYPES.includes(m.mimeType) &&
+				m.videoMediaMetadata
 			) {
 				this.addMediaItem(new MediaItem(m, this.library))
 			}
@@ -91,7 +100,7 @@ export default class MediaScanner {
 			.initiateClient()
 			.then(() =>
 				gapi.client.drive.files.list({
-					q: `'${root}' in parents and not (${this.printUnsupportedMimeTypes()}) and not (name contains 'sample')`,
+					q: `'${root}' in parents and not (${this.printUnsupportedMimeTypes()}) and (mimeType contains 'video/' or mimeType contains 'application/vnd.google-apps.folder') and not (name contains 'sample')`,
 					spaces: "drive",
 					fields:
 						"nextPageToken,files(id,name,size,mimeType,videoMediaMetadata,thumbnailLink)",

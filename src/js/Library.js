@@ -1,3 +1,6 @@
+import MediaScanner from "./MediaScanner"
+import { sleep } from "./Utils"
+
 export default class Library {
 	/**
 	 * Creates a library object
@@ -9,6 +12,7 @@ export default class Library {
 		this.type = options.type
 		this.root = options.properties.root
 
+		/** @type {Array.<MediaItem>} */
 		this.mediaItems = []
 		this.pushQueue = []
 		this.pushCount = 0
@@ -27,7 +31,10 @@ export default class Library {
 	}
 
 	updateMediaItems() {
-		this.mediaItems = this.scanner.mediaItems
+		this.mediaItems = this.scanner.mediaItems.filter(i =>
+			this.mediaItems.every(r => r.id != i.id)
+		)
+
 		let payload = this.mediaItems.map(m => m.toRow())
 		gapi.client.sheets.spreadsheets.values
 			.batchUpdate({
@@ -52,12 +59,16 @@ export default class Library {
 	updateRemoteItem(mediaItem) {
 		// Get the row containing the media item
 		this.getRemoteSheet().then(response => {
-			let selected =
-				response.result.values.findIndex(mediaItems => {
-					return mediaItems[0] == mediaItem.id
-				}) + 1 // Accounts for row/sheet incompatibility
+			if (response.result.error) {
+				sleep(500).then(r => this.updateRemoteItem(mediaItem))
+			} else {
+				let selected =
+					response.result.values.findIndex(mediaItems => {
+						return mediaItems[0] == mediaItem.id
+					}) + 1 // Accounts for row/sheet incompatibility
 
-			this.pushToRange([mediaItem.toRow()], `A${selected}:Z${selected}`)
+				this.pushToRange([mediaItem.toRow()], `A${selected}:Z${selected}`)
+			}
 		})
 	}
 

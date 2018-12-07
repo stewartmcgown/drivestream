@@ -1,3 +1,5 @@
+import MediaItem from "./MediaItem"
+
 /**
  * A library of dynamic, reusable components
  */
@@ -17,8 +19,12 @@ export default class Components {
         `
 	}
 
+	/**
+	 *
+	 * @param {MediaItem} mediaItem
+	 */
 	static mediaItem(mediaItem) {
-		return `<div class="col s2">
+		return `<div class="mediaItem">
                 <a href="${
 									mediaItem.playbackUrl
 								}" class="card-url" target="_blank">
@@ -28,6 +34,7 @@ export default class Components {
                         </div>
                         <div class="card-content">
                             <div class="card-title">${mediaItem.name}</div>
+                            <p>${mediaItem.duration.formatted}</p>
                         </div>
                     </div>
                 </a>
@@ -36,7 +43,6 @@ export default class Components {
 
 	static library(library) {
 		return `
-                 <div class="col s4"> 
                    <div class="card"> 
                      <div class="card-content" 
                        <span class="card-title">${library.name}</span> 
@@ -52,14 +58,14 @@ export default class Components {
 												}" data-library-name="${
 			library.name
 		}" class="updateLibrary">Update</a> 
-                       <a href="#" data-library-id="${
-													library.id
-												}" data-library-name="${
-			library.name
-		}" class="refreshMetaLibrary">Refresh Metadata</a> 
+                       <a href="#" data-library-id="${library.id}" 
+                        data-library-name="${library.name}"
+                        class="refreshMetaLibrary">Refresh Metadata</a> 
+                         <a href="#" data-library-id="${library.id}" 
+                        data-library-name="${library.name}"
+                        class="deleteLibrary">Delete</a>
                       </div> 
                     </div> 
-                 </div>
             `
 	}
 }

@@ -1,3 +1,5 @@
+import { sleep } from "./Utils"
+
 export default class MetadataEngine {
 	constructor() {
 		this.activeRequests = 0
@@ -50,8 +52,6 @@ export default class MetadataEngine {
 		this.lastRequestDate = new Date()
 		request.send(null)
 		this.activeRequests--
-
-		console.log(request.responseText)
 
 		metadata = JSON.parse(request.responseText)
 
