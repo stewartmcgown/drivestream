@@ -1,141 +1,153 @@
-class Library {
-    /**
-     * Creates a library object
-     * @param {object} options 
-     */
-    constructor(options, drivestream) {
-        this.id = options.id
-        this.name = options.name
-        this.type = options.type
-        this.root = options.properties.root
+export default class Library {
+	/**
+	 * Creates a library object
+	 * @param {object} options
+	 */
+	constructor(options, drivestream) {
+		this.id = options.id
+		this.name = options.name
+		this.type = options.type
+		this.root = options.properties.root
 
-        this.mediaItems = []
-        this.pushQueue = []
-        this.pushCount = 0
-        this.lastPush = null
+		this.mediaItems = []
+		this.pushQueue = []
+		this.pushCount = 0
+		this.lastPush = null
 
-        this.drivestream = drivestream
+		this.drivestream = drivestream
 
-        this.scanner = new MediaScanner(this, this.drivestream)
+		this.scanner = new MediaScanner(this, this.drivestream)
 
-        this.SHEET_EXPIRY = 100000
+		this.SHEET_EXPIRY = 100000
+	}
 
-    }
+	update() {
+		this.drivestream.ui.setScanning(this)
+		this.scanner.scan()
+	}
 
-    update() {
-        this.drivestream.ui.setScanning(this)
-        this.scanner.scan()
-    }
+	updateMediaItems() {
+		this.mediaItems = this.scanner.mediaItems
+		let payload = this.mediaItems.map(m => m.toRow())
+		gapi.client.sheets.spreadsheets.values
+			.batchUpdate({
+				spreadsheetId: this.id,
+				resource: {
+					valueInputOption: "RAW",
+					data: [
+						{
+							range: "A:Z",
+							values: payload
+						}
+					]
+				}
+			})
+			.then(r => console.log(r))
+	}
 
-    updateMediaItems() {
-        this.mediaItems = this.scanner.mediaItems
-        let payload = this.mediaItems.map(m => m.toRow())
-        gapi.client.sheets.spreadsheets.values.batchUpdate({
-            "spreadsheetId": this.id,
-            "resource": {
-                "valueInputOption": 'RAW',
-                "data": [
-                    {
-                        "range": "A:Z",
-                        "values": payload
-                    }
-                ]
-            }
-        }).then(r => console.log(r))
-    }
+	/**
+	 * Push changes from a mediaItem to the database
+	 * @param {MediaItem} mediaItem
+	 */
+	updateRemoteItem(mediaItem) {
+		// Get the row containing the media item
+		this.getRemoteSheet().then(response => {
+			let selected =
+				response.result.values.findIndex(mediaItems => {
+					return mediaItems[0] == mediaItem.id
+				}) + 1 // Accounts for row/sheet incompatibility
 
-    /**
-     * Push changes from a mediaItem to the database
-     * @param {MediaItem} mediaItem 
-     */
-    updateRemoteItem(mediaItem) {
-        // Get the row containing the media item
-        this.getRemoteSheet().then((response) => {
-            let selected = response.result.values.findIndex((mediaItems) => {
-                return mediaItems[0] == mediaItem.id
-            }) + 1 // Accounts for row/sheet incompatibility
+			this.pushToRange([mediaItem.toRow()], `A${selected}:Z${selected}`)
+		})
+	}
 
-            this.pushToRange([mediaItem.toRow()], `A${selected}:Z${selected}`)
-        })
-    }
+	async getRemoteSheet() {
+		if (!this.cachedSheet || !this.sheetFetchedDate) {
+			return this.doRemoteSheetRequest()
+		} else if (
+			new Date().getTime() - this.sheetFetchedDate.getTime() >
+			this.SHEET_EXPIRY
+		) {
+			return this.doRemoteSheetRequest()
+		} else {
+			return this.cachedSheet
+		}
+	}
 
-    async getRemoteSheet() {
+	doRemoteSheetRequest() {
+		return gapi.client.sheets.spreadsheets.values
+			.get({
+				spreadsheetId: this.id,
+				range: "A:Z"
+			})
+			.then(response => {
+				this.cachedSheet = response
+				this.sheetFetchedDate = new Date()
+				return response
+			})
+	}
 
-        if (!this.cachedSheet || !this.sheetFetchedDate) {
-            return this.doRemoteSheetRequest()
-        } else if ((new Date().getTime() - this.sheetFetchedDate.getTime()) > this.SHEET_EXPIRY) {
-            return this.doRemoteSheetRequest()
-        } else {
-            return this.cachedSheet
-        }
-    }
+	pushToRange(values, range) {
+		let body = {
+			values: values
+		}
 
-    doRemoteSheetRequest() {
-        return (gapi.client.sheets.spreadsheets.values.get({
-            spreadsheetId: this.id,
-            range: "A:Z"
-        }).then((response) => {
-            this.cachedSheet = response
-            this.sheetFetchedDate = new Date()
-            return response;
-        }))
-    }
+		gapi.client.sheets.spreadsheets.values
+			.update({
+				spreadsheetId: this.id,
+				range: range,
+				valueInputOption: "RAW",
+				resource: body
+			})
+			.then(response => {
+				var result = response.result
+				console.log(`${result.updatedCells} cells updated.`)
+			})
+	}
 
-    pushToRange(values, range) {
+	/**
+	 * Handles queue of write to sheet.
+	 * If
+	 */
+	async pushQueue() {
+		if (!this.lastPush) this.lastPush = new Date() // Handle null lastpush
+		while (new Date().getTime() - this.lastPush.getTime() < 100000) {
+			// while not 100s elapsed since most recent push
+			await sleep(100)
+		}
 
-        let body = {
-            "values": values
-        }
+		let params = {
+			spreadsheetId: "my-spreadsheet-id" // TODO: Update placeholder value.
+		}
 
-        gapi.client.sheets.spreadsheets.values.update({
-            spreadsheetId: this.id,
-            range: range,
-            valueInputOption: "RAW",
-            resource: body
-        }).then((response) => {
-            var result = response.result;
-            console.log(`${result.updatedCells} cells updated.`);
-        });
-    }
+		let batchUpdateValuesRequestBody = {
+			// How the input data should be interpreted.
+			valueInputOption: "RAW",
 
-    /**
-     * Handles queue of write to sheet.
-     * If 
-     */
-    async pushQueue() {
-        if (!this.lastPush)
-            this.lastPush = new Date() // Handle null lastpush
-        while ((new Date().getTime() - this.lastPush.getTime()) < 100000) { // while not 100s elapsed since most recent push
-            await sleep(100)
-        }
+			// The new values to apply to the spreadsheet.
+			data: []
 
-        let params = {
-            spreadsheetId: 'my-spreadsheet-id',  // TODO: Update placeholder value.
-        };
+			// TODO: Add desired properties to the request body.
+		}
 
-        let batchUpdateValuesRequestBody = {
-            // How the input data should be interpreted.
-            valueInputOption: 'RAW',
+		let request = gapi.client.sheets.spreadsheets.values.batchUpdate(
+			params,
+			batchUpdateValuesRequestBody
+		)
+		request.then(
+			function(response) {
+				// TODO: Change code below to process the `response` object:
+				console.log(response.result)
+			},
+			function(reason) {
+				console.error("error: " + reason.result.error.message)
+			}
+		)
+	}
 
-            // The new values to apply to the spreadsheet.
-            data: [],
-
-            // TODO: Add desired properties to the request body.
-        };
-
-        let request = gapi.client.sheets.spreadsheets.values.batchUpdate(params, batchUpdateValuesRequestBody);
-        request.then(function (response) {
-            // TODO: Change code below to process the `response` object:
-            console.log(response.result);
-        }, function (reason) {
-            console.error('error: ' + reason.result.error.message);
-        });
-
-    }
-
-    refreshMeta() {
-        for (let m of this.mediaItems) {
-            this.drivestream.metadataEngine.getMetadata(m)
-        }
-    }
+	refreshMeta() {
+		for (let m of this.mediaItems) {
+			this.drivestream.metadataEngine.getMetadata(m)
+		}
+	}
 }

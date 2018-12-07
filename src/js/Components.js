@@ -1,9 +1,9 @@
 /**
  * A library of dynamic, reusable components
  */
-class Components {
-    static signIn(message = "Sign in with Google") {
-        return `
+export default class Components {
+	static signIn(message = "Sign in with Google") {
+		return `
         <div class="sign-in-container">
         <div class="sign-in-inner">
             <a class="button sign-in" href="#" onclick="gapi.load('client:auth2', app.loadDriveAPI)">
@@ -15,11 +15,13 @@ class Components {
             </div>
             </div>
         `
-    }
+	}
 
-    static mediaItem(mediaItem) {
-        return `<div class="col s2">
-                <a href="${mediaItem.playbackUrl}" class="card-url" target="_blank">
+	static mediaItem(mediaItem) {
+		return `<div class="col s2">
+                <a href="${
+									mediaItem.playbackUrl
+								}" class="card-url" target="_blank">
                     <div class="card vertical media-card" id="${mediaItem.id}">
                         <div class="card-image">
                             <img src="${mediaItem.poster}" class="media-image">
@@ -30,22 +32,34 @@ class Components {
                     </div>
                 </a>
             </div>`
-    }
+	}
 
-    static library(library) {
-        return `
+	static library(library) {
+		return `
                  <div class="col s4"> 
                    <div class="card"> 
                      <div class="card-content" 
                        <span class="card-title">${library.name}</span> 
                      </div> 
                       <div class="card-action"> 
-                       <a href="#" data-library-id="${library.id}" data-library-name="${library.name}" class="openLibrary">Open</a> 
-                       <a href="#" data-library-id="${library.id}" data-library-name="${library.name}" class="updateLibrary">Update</a> 
-                       <a href="#" data-library-id="${library.id}" data-library-name="${library.name}" class="refreshMetaLibrary">Refresh Metadata</a> 
+                       <a href="#" data-library-id="${
+													library.id
+												}" data-library-name="${
+			library.name
+		}" class="openLibrary">Open</a> 
+                       <a href="#" data-library-id="${
+													library.id
+												}" data-library-name="${
+			library.name
+		}" class="updateLibrary">Update</a> 
+                       <a href="#" data-library-id="${
+													library.id
+												}" data-library-name="${
+			library.name
+		}" class="refreshMetaLibrary">Refresh Metadata</a> 
                       </div> 
                     </div> 
                  </div>
             `
-    }
+	}
 }

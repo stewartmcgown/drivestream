@@ -1,79 +1,75 @@
+export default class UI {
+	constructor(drivestream) {
+		this.drivestream = drivestream
+		this.containers = {
+			loading: $("#drivestream .loading"),
+			libraries: $("#drivestream .libraries"),
+			media: $("#drivestream .mediaItems")
+		}
+	}
 
+	showSignIn() {
+		this.containers.loading.html(Components.signIn())
+	}
 
-class UI {
-    constructor(drivestream) {
-        this.drivestream = drivestream
-        this.containers = {
-            loading: $("#drivestream .loading"),
-            libraries: $("#drivestream .libraries"),
-            media: $("#drivestream .mediaItems")
-        }
+	hideSignIn() {
+		this.containers.loading.remove()
+	}
 
+	showLibraryScan() {
+		this.containers.loading.html(Components.scanLibraryButton())
+	}
 
-    }
+	showLibraries() {
+		this.containers.libraries.empty()
+		for (let library of this.drivestream.libraries) {
+			this.containers.libraries.append(Components.library(library))
+		}
 
-    showSignIn() {
-        this.containers.loading.html(Components.signIn())
-    }
+		let that = this
 
-    hideSignIn() {
-        this.containers.loading.remove()
-    }
+		$("a.openLibrary").on("click", function() {
+			that.drivestream.getLibrary($(this).attr("data-library-id"))
+		})
 
-    showLibraryScan() {
-        this.containers.loading.html(Components.scanLibraryButton())
-    }
+		$("a.updateLibrary").on("click", function() {
+			that.drivestream.updateLibrary($(this).attr("data-library-id"))
+		})
 
-    showLibraries() {
-        this.containers.libraries.empty();
-        for (let library of this.drivestream.libraries) {
-            this.containers.libraries.append(Components.library(library));
-        }
+		$("a.refreshMetaLibrary").on("click", function() {
+			that.drivestream.refreshMetaLibrary($(this).attr("data-library-id"))
+		})
+	}
 
-        let that = this
+	emptyMediaItems() {
+		this.containers.media.empty()
+	}
 
-        $("a.openLibrary").on('click', function () {
-            that.drivestream.getLibrary($(this).attr("data-library-id"))
-        })
+	/**
+	 *
+	 * @param {MediaItem} mediaItem
+	 */
+	showMediaItem(mediaItem) {
+		if (mediaItem.name == "") return
 
-        $("a.updateLibrary").on('click', function () {
-            that.drivestream.updateLibrary($(this).attr("data-library-id"))
-        })
+		this.containers.media.append(Components.mediaItem(mediaItem))
+	}
 
-        $("a.refreshMetaLibrary").on('click', function () {
-            that.drivestream.refreshMetaLibrary($(this).attr("data-library-id"))
-        })
-    }
+	updateMediaItem(mediaItem) {
+		let card = document.getElementById(mediaItem.id)
 
-    emptyMediaItems() {
-        this.containers.media.empty()
-    }
+		card.getElementsByTagName("img")[0].src = mediaItem.getPoster(400)
+		card.getElementsByClassName("card-title")[0].innerHTML = mediaItem.title
+	}
 
-    /**
-     * 
-     * @param {MediaItem} mediaItem 
-     */
-    showMediaItem(mediaItem) {
-        if (mediaItem.name == "")
-            return
-
-        this.containers.media.append(Components.mediaItem(mediaItem))
-
-    }
-
-    updateMediaItem(mediaItem) {
-        let card = document.getElementById(mediaItem.id)
-
-        card.getElementsByTagName("img")[0].src = mediaItem.getPoster(400)
-        card.getElementsByClassName("card-title")[0].innerHTML = mediaItem.title
-    }
-
-    /**
-     * 
-     * @param {Library} library 
-     */
-    setScanning(library) {
-        this.containers.libraries.find(`#${library.id}`).find(".updateLibrary").html("Loading")
-    }
-
+	/**
+	 *
+	 * @param {Library} library
+	 */
+	setScanning(library) {
+		this.containers.libraries
+			.find(`#${library.id}`)
+			.find(".updateLibrary")
+			.html("Loading")
+	}
 }

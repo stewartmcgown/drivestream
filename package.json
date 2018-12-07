@@ -1,0 +1,31 @@
+{
+	"name": "drivestream",
+	"version": "1.0.0",
+	"description": "",
+	"main": " ",
+	"scripts": {
+		"dev": "webpack-dev-server --open --mode development",
+		"prebuild": "rimraf dist",
+		"build": "webpack --mode production --display-error-details",
+		"eslint": "eslint '**/*.js' --fix --quiet"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/stewartmcgown/drivestream.git"
+	},
+	"author": "",
+	"license": "ISC",
+	"bugs": {
+		"url": "https://github.com/stewartmcgown/drivestream/issues"
+	},
+	"homepage": "https://github.com/stewartmcgown/drivestream#readme",
+	"devDependencies": {
+		"babel": "^6.23.0",
+		"babel-loader": "^8.0.4",
+		"npm-run-all": "^4.1.5",
+		"parse-torrent-title": "^1.2.0",
+		"webpack": "^4.27.1",
+		"webpack-cli": "^3.1.2",
+		"webpack-dev-server": "^3.1.10"
+	}
+}

@@ -1,114 +1,121 @@
 /**
  * Scans a folder for media files and organises them appropriately
  */
-class MediaScanner {
-    /**
-     * 
-     * @param {string} id Id of root folder
-     * @param {string} type Type of media
-     * @param {DriveStream.Library} library A library 
-     */
-    constructor(library, drivestream) {
-        this.root = library.root
-        this.type = library.type
+export default class MediaScanner {
+	/**
+	 *
+	 * @param {string} id Id of root folder
+	 * @param {string} type Type of media
+	 * @param {DriveStream.Library} library A library
+	 */
+	constructor(library, drivestream) {
+		this.root = library.root
+		this.type = library.type
 
-        this.library = library
-        this.drivestream = drivestream
+		this.library = library
+		this.drivestream = drivestream
 
-        this.activeRequests = 0
-        this.queuedRequests = 0
-        this.isScanning_ = false
-        this.mediaItems = []
+		this.activeRequests = 0
+		this.queuedRequests = 0
+		this.isScanning_ = false
+		this.mediaItems = []
 
-        this.PAGE_SIZE = 1000
-        this.MAX_ITEMS = 0
-        
-        this.UNSUPPORTED_FILE_TYPES = ["video/mp2t", "video/ts"]
-    }
+		this.PAGE_SIZE = 1000
+		this.MAX_ITEMS = 0
 
-    get isScanning() {
-        return this.isScanning_
-    }
+		this.UNSUPPORTED_FILE_TYPES = ["video/mp2t", "video/ts"]
+	}
 
-    set isScanning(isScanning) {
-        this.isScanning_ = isScanning
+	get isScanning() {
+		return this.isScanning_
+	}
 
-        if (!this.isScanning_) {
-            //toast({content: `Finished scanning ${this.type} library in ${this.root}`})
-            this.library.updateMediaItems()
-        }
-    }
+	set isScanning(isScanning) {
+		this.isScanning_ = isScanning
 
-    addMediaItem(mediaItem) {
-        this.mediaItems.push(mediaItem)
-    }
+		if (!this.isScanning_) {
+			//toast({content: `Finished scanning ${this.type} library in ${this.root}`})
+			this.library.updateMediaItems()
+		}
+	}
 
-    scan() {
-        this.isScanning = true
+	addMediaItem(mediaItem) {
+		this.mediaItems.push(mediaItem)
+	}
 
-        //this.ui.setScanning({})
+	scan() {
+		this.isScanning = true
 
-        this.recusriveListFolder(this.root)
-    }
+		//this.ui.setScanning({})
 
-    processMediaFileList(list) {
-        for (let m of list) {
-            if (m.mimeType == "application/vnd.google-apps.folder") {
-                this.recusriveListFolder(m.id)
-            } else if (m.mimeType.includes("video/") && !this.UNSUPPORTED_FILE_TYPES.includes(m.mimeType)) {
-                this.addMediaItem(new MediaItem(m, this.library))
-            }
-            
-        }        
-    }
+		this.recusriveListFolder(this.root)
+	}
 
-    printUnsupportedMimeTypes() {
-        let s = ""
-        for (let i = 0, mime; mime = this.UNSUPPORTED_FILE_TYPES[i]; i++) {
-            if (s.length > 0)
-                s += " "
+	processMediaFileList(list) {
+		console.log(list)
+		for (let m of list) {
+			if (m.mimeType == "application/vnd.google-apps.folder") {
+				this.recusriveListFolder(m.id)
+			} else if (
+				m.mimeType.includes("video/") &&
+				!this.UNSUPPORTED_FILE_TYPES.includes(m.mimeType)
+			) {
+				this.addMediaItem(new MediaItem(m, this.library))
+			}
+		}
+	}
 
-            s += `mimeType contains '${mime}'`
+	printUnsupportedMimeTypes() {
+		let s = ""
+		for (let i = 0, mime; (mime = this.UNSUPPORTED_FILE_TYPES[i]); i++) {
+			if (s.length > 0) s += " "
 
-            if (i != (this.UNSUPPORTED_FILE_TYPES.length - 1))
-                s += " or"
-        }
-        return s;
-    }
+			s += `mimeType contains '${mime}'`
 
-    async recusriveListFolder(root, nextPageToken) {
-        this.isScanning = true
-        while (this.activeRequests >= 3) {
-            this.queuedRequests++
-            await sleep(250)
-            this.queuedRequests--
-        }
-        
-            
+			if (i != this.UNSUPPORTED_FILE_TYPES.length - 1) s += " or"
+		}
+		return s
+	}
 
-        this.activeRequests++
+	async recusriveListFolder(root, nextPageToken) {
+		this.isScanning = true
+		while (this.activeRequests >= 3) {
+			this.queuedRequests++
+			await sleep(250)
+			this.queuedRequests--
+		}
 
-        await this.drivestream.initiateClient().then(() => gapi.client.drive.files.list({
-            'q': `'${root}' in parents and not (${this.printUnsupportedMimeTypes()}) and not (name contains 'sample')`,
-            'spaces': 'drive',
-            'fields': "nextPageToken,files(id,name,size,mimeType,videoMediaMetadata,thumbnailLink)",
-            'pageToken': nextPageToken,
-            pageSize: this.PAGE_SIZE
-        })).then((response) => {
-            this.activeRequests--
+		this.activeRequests++
 
-            if (response.result.error) {
-                this.recusriveListFolder(root, nextPageToken)
-            } else if (response.result.files) {
-                this.processMediaFileList(response.result.files)
+		await this.drivestream
+			.initiateClient()
+			.then(() =>
+				gapi.client.drive.files.list({
+					q: `'${root}' in parents and not (${this.printUnsupportedMimeTypes()}) and not (name contains 'sample')`,
+					spaces: "drive",
+					fields:
+						"nextPageToken,files(id,name,size,mimeType,videoMediaMetadata,thumbnailLink)",
+					pageToken: nextPageToken,
+					pageSize: this.PAGE_SIZE
+				})
+			)
+			.then(response => {
+				this.activeRequests--
 
-                if (response.result.nextPageToken) {
-                    this.recusriveListFolder(root, response.result.nextPageToken)
-                } else if (!response.result.nextPageToken && this.activeRequests == 0 && this.queuedRequests == 0)
-                    this.isScanning = false
-            }
+				if (response.result.error) {
+					this.recusriveListFolder(root, nextPageToken)
+				} else if (response.result.files) {
+					this.processMediaFileList(response.result.files)
 
-        })
-    }
+					if (response.result.nextPageToken) {
+						this.recusriveListFolder(root, response.result.nextPageToken)
+					} else if (
+						!response.result.nextPageToken &&
+						this.activeRequests == 0 &&
+						this.queuedRequests == 0
+					)
+						this.isScanning = false
+				}
+			})
+	}
 }
-
