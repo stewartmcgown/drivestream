@@ -2,7 +2,7 @@ import MetadataEngine from "./MetadataEngine"
 import Library from "./Library"
 import MediaItem from "./MediaItem"
 import UI from "./UI"
-import credentials from "../../credentials"
+import { API_KEY, CLIENT_ID } from "../../credentials.js"
 
 export const DISCOVERY_DOCS = [
 	"https://www.googleapis.com/discovery/v1/apis/drive/v3/rest",
@@ -31,7 +31,7 @@ export default class DriveStream {
 		let that = this
 		gapi.auth2.authorize(
 			{
-				client_id: CLIENT_ID,
+				client_id: credentials.CLIENT_ID,
 				immediate: false,
 				scope: SCOPES
 			},
