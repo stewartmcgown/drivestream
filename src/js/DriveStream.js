@@ -31,7 +31,7 @@ export default class DriveStream {
 		let that = this
 		gapi.auth2.authorize(
 			{
-				client_id: credentials.CLIENT_ID,
+				client_id: CLIENT_ID,
 				immediate: false,
 				scope: SCOPES
 			},
