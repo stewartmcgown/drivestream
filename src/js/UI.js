@@ -14,7 +14,14 @@ export default class UI {
 	}
 
 	setEvents() {
-		document.querySelector("#nav-search").addEventListener("keyup", e => {})
+		/*document.querySelector("#nav-search").addEventListener("keyup", e => {
+			const container = document.querySelector(".mediaItems")
+			const items = Object.freeze([...document.querySelectorAll(".media-card")])
+			container.innerHTML = ""
+			const filtered = items.forEach(f =>
+				f.innerText.includes(e.target.value) ? container.append(f) : null
+			)
+		})*/
 	}
 
 	showSignIn() {

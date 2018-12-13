@@ -19,3 +19,7 @@ export const CLIENT_ID = "YOUR_CLIENT_ID"
 ## Create a Library
 
 Haven't made the UI work with this yet. Run `app.createLibrary({name: "name", root: "rootFolderID"})` to make one. Promise I'll add this to the UI soon!
+
+## Roadmap
+
+1. Switch to Vue

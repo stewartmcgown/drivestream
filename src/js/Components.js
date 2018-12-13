@@ -21,20 +21,21 @@ export default class Components {
 
 	/**
 	 *
-	 * @param {MediaItem} mediaItem
+	 * @param {MediaItem} media
 	 */
-	static mediaItem(mediaItem) {
+	static mediaItem(media) {
 		return `<div class="mediaItem">
-                <a href="${
-									mediaItem.playbackUrl
-								}" class="card-url" target="_blank">
-                    <div class="card vertical media-card" id="${mediaItem.id}">
+                <a href="${media.playbackUrl}" class="card-url" target="_blank">
+                    <div class="card vertical media-card" id="${media.id}">
                         <div class="card-image">
-                            <img src="${mediaItem.poster}" class="media-image">
+                            <img src="${media.poster}" class="media-image">
                         </div>
                         <div class="card-content">
-                            <div class="card-title">${mediaItem.name}</div>
-                            <p>${mediaItem.duration.formatted}</p>
+                            <span class="card-title">${media.name}</span>
+                            <span class="year">${media.year}</span>
+                            <span class="duration">${
+															media.duration.formatted
+														}</span>
                         </div>
                     </div>
                 </a>

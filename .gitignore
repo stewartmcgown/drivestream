@@ -3,3 +3,4 @@ gulpfile.js
 package-lock.json
 dist
 credentials.js
+vue

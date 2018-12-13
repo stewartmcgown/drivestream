@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<meta charset="utf-8" />
+		<title></title>
+		<style>
+			body {
+				width: 90vw;
+				height: 90vh;
+				background: #000;
+				transition: background 1s;
+			}
+
+			span {
+				font-family: Georgia;
+				font-size: 36px;
+				opacity: 0;
+			}
+		</style>
+	</head>
+
+	<body>
+		<video controls></video> <br />
+		<span></span>
+		<script type="text/javascript">
+			window.onload = function() {
+				var url =
+					"https://www.googleapis.com/drive/v3/files/1WNDle_tsDbQ9-Dqewer373BRA7bOA9O_?alt=media"
+
+				var body = document.querySelector("body")
+				var mediaSource = new MediaSource()
+				var video = document.querySelector("video")
+				var span = document.querySelector("span")
+				var mimecodec = 'video/mp4; codecs="avc1.42E01E, mp4a.40.2"'
+
+				video.oncanplay = function() {
+					this.play()
+				}
+
+				video.onended = function() {
+					body.style.backgroundColor = "initial"
+				}
+
+				video.ontimeupdate = function() {
+					// Do time related stuff
+				}
+
+				video.src = URL.createObjectURL(mediaSource)
+				mediaSource.addEventListener("sourceopen", sourceOpen)
+
+				function sourceOpen(event) {
+					// if the media type is supported by `mediaSource`
+					// fetch resource, begin stream read,
+					// append stream to `sourceBuffer`
+					if (MediaSource.isTypeSupported(mimecodec)) {
+						var sourceBuffer = mediaSource.addSourceBuffer(mimecodec)
+						sourceBuffer.mode = "sequence"
+
+						fetch(url, {
+							headers: new Headers({
+								Authorization:
+									"Bearer ya29.Gl1tBhR8TgsQrhVNcPLJSGx_TAq7W_iFjXgTTZOL16QHlgsdNqqJsXiYiLuB4zG-Nmk9fzPmWB8-5BRj1yipC0q_4q9yTGdeFXuP87IP6AowRe9_8jb5fv1GBcPVAF4"
+							})
+						})
+							// return `ReadableStream` of `response`
+							.then(response => response.body.getReader())
+							.then(reader => {
+								var processStream = data => {
+									if (data.done) {
+										return
+									}
+									// append chunk of stream to `sourceBuffer`
+									sourceBuffer.appendBuffer(data.value)
+								}
+								// at `sourceBuffer` `updateend` call `reader.read()`,
+								// to read next chunk of stream, append chunk to
+								// `sourceBuffer`
+								sourceBuffer.addEventListener("updateend", function() {
+									reader.read().then(processStream)
+								})
+								// start processing stream
+								reader.read().then(processStream)
+								// do stuff `reader` is closed,
+								// read of stream is complete
+								return reader.closed.then(() => {
+									// signal end of stream to `mediaSource`
+									mediaSource.endOfStream()
+									return mediaSource.readyState
+								})
+							})
+							// do stuff when `reader.closed`, `mediaSource` stream ended
+							.then(msg => console.log(msg))
+					} else {
+						alert(mimecodec + " not supported")
+					}
+				}
+			}
+		</script>
+	</body>
+</html>
