@@ -29,7 +29,6 @@ export default class DriveStream {
 	}
 
 	loadDriveAPI() {
-		let that = this
 		gapi.auth2.authorize(
 			{
 				client_id: CLIENT_ID,
@@ -37,10 +36,10 @@ export default class DriveStream {
 				scope: SCOPES
 			},
 			async () => {
-				that.isFirstTime = false
-				that.ui.hideSignIn()
-				await that.initiateClient()
-				that.getLibraries()
+				app.isFirstTime = false
+				app.ui.hideSignIn()
+				await app.initiateClient()
+				app.getLibraries()
 				console.log("Loaded API")
 			}
 		)
