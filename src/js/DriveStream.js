@@ -62,6 +62,15 @@ export default class DriveStream {
 		})
 	}
 
+	async getFolders() {
+		return await gapi.client.drive.files.list({
+			q: `mimeType contains 'folder' and 'root' in parents and not trashed`,
+			spaces: "drive",
+			fields: "nextPageToken,files(id,name,properties)",
+			pageSize: 1000
+		})
+	}
+
 	/**
 	 * Creates a remote library from a Library object
 	 * @param {Library} library

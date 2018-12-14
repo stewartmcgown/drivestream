@@ -1,7 +1,14 @@
 import Components from "./Components"
+import DriveStream from "./DriveStream"
+import Library from "./Library"
 require("../sass/drivestream.scss")
+require("./materialize.js")
 
 export default class UI {
+	/**
+	 *
+	 * @param {DriveStream} drivestream
+	 */
 	constructor(drivestream) {
 		this.drivestream = drivestream
 		this.containers = {
@@ -14,14 +21,46 @@ export default class UI {
 	}
 
 	setEvents() {
-		/*document.querySelector("#nav-search").addEventListener("keyup", e => {
-			const container = document.querySelector(".mediaItems")
-			const items = Object.freeze([...document.querySelectorAll(".media-card")])
-			container.innerHTML = ""
-			const filtered = items.forEach(f =>
-				f.innerText.includes(e.target.value) ? container.append(f) : null
+		M.AutoInit()
+		document.querySelector("#nav-search").addEventListener("keyup", e => {
+			;[...document.querySelectorAll(".mediaItem")].forEach(f =>
+				f.innerHTML.toLowerCase().includes(e.target.value.toLowerCase())
+					? (f.style.display = "block")
+					: (f.style.display = "none")
 			)
-		})*/
+		})
+
+		document.querySelector("[data-action]").addEventListener("click", e => {
+			const element = document.getElementById(e.target.dataset.action)
+			const instance = M.Modal.getInstance(element)
+			instance.open()
+
+			this.drivestream.getFolders().then(response => {
+				const target = element.querySelector(".folders")
+				response.result.files.forEach(f => {
+					target.innerHTML += `
+						<label>
+        					<input type="radio" name="folder-group" class="with-gap" value="${
+										f.id
+									}" />
+        					<span>${f.name}</span>
+      					</label>
+					`
+				})
+			})
+
+			element.querySelector("#createLibrary").addEventListener("click", e => {
+				const name = element.querySelector("#newLibraryName").value
+				const type = element.querySelector("#newLibraryType").value
+				const id = element.querySelector("[type=radio]:checked").value
+
+				this.drivestream.createLibrary({
+					name,
+					type,
+					root: id
+				})
+			})
+		})
 	}
 
 	showSignIn() {

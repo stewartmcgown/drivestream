@@ -127,4 +127,11 @@ body {
 			}
 		}
 	}
+
+	.modal {
+		.folders {
+			display: grid;
+			grid-template-columns: repeat(4, 1fr);
+		}
+	}
 }
