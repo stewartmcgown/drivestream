@@ -1,6 +1,7 @@
 import Components from "./Components"
 import DriveStream from "./DriveStream"
 import Library from "./Library"
+import loadingToast from "./Toasts/LoadingToast"
 require("../sass/drivestream.scss")
 require("./materialize.js")
 
@@ -53,6 +54,10 @@ export default class UI {
 				const name = element.querySelector("#newLibraryName").value
 				const type = element.querySelector("#newLibraryType").value
 				const id = element.querySelector("[type=radio]:checked").value
+				const toast = M.toast({
+					html: loadingToast(`Creating Library '${name}'...`),
+					displayLength: Infinity
+				})
 
 				this.drivestream.createLibrary({
 					name,

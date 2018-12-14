@@ -3,6 +3,7 @@ import Library from "./Library"
 import MediaItem from "./MediaItem"
 import UI from "./UI"
 import { API_KEY, CLIENT_ID } from "../../credentials.js"
+import loadingToast from "./Toasts/LoadingToast"
 
 export const DISCOVERY_DOCS = [
 	"https://www.googleapis.com/discovery/v1/apis/drive/v3/rest",
@@ -127,7 +128,11 @@ export default class DriveStream {
 		this.ui.showLibraries()
 	}
 
-	async getLibraries() {
+	getLibraries() {
+		const toast = M.toast({
+			html: loadingToast(`Fetching libraries...`),
+			displayLength: Infinity
+		})
 		gapi.client.drive.files
 			.list({
 				q: `properties has {key='drivestream' and value='library'} and trashed = false`,
@@ -137,9 +142,15 @@ export default class DriveStream {
 			})
 			.then(response => {
 				this.setLibraries(response.result.files)
+				toast.dismiss()
 			})
 	}
 
+	/**
+	 *
+	 * @param {*} id
+	 * @return {Library}
+	 */
 	findLibraryById(id) {
 		return this.libraries.find(l => {
 			return l.id == id
@@ -148,6 +159,12 @@ export default class DriveStream {
 
 	getLibrary(id) {
 		let library = this.findLibraryById(id)
+
+		const toast = M.toast({
+			html: loadingToast(`Opening ${library.name}...`),
+			displayLength: Infinity
+		})
+
 		this.activeLibrary = library
 		return gapi.client.sheets.spreadsheets.values
 			.get({
@@ -155,6 +172,7 @@ export default class DriveStream {
 				range: "A:Z"
 			})
 			.then(response => {
+				toast.dismiss()
 				library.mediaItems = response.result.values.map(
 					row => new MediaItem(row, library)
 				)
@@ -165,18 +183,33 @@ export default class DriveStream {
 
 	updateLibrary(id) {
 		let library = this.findLibraryById(id)
+		const toast = M.toast({
+			html: loadingToast(`Updating ${library.name}...`)
+		})
 		library.update()
 	}
 
 	refreshMetaLibrary(id) {
 		let library = this.findLibraryById(id)
+		const toast = M.toast({
+			html: loadingToast(`Refreshing ${library.name}...`)
+		})
 		library.refreshMeta()
 	}
 
 	deleteLibrary(id) {
 		let library = this.findLibraryById(id)
+
+		const toast = M.toast({
+			html: loadingToast(`Deleting ${library.name}...`),
+			displayLength: Infinity
+		})
+
 		gapi.client.drive.files
 			.update({ fileId: library.id, resource: { trashed: true } })
-			.then(r => this.getLibraries())
+			.then(r => {
+				toast.dismiss()
+				this.getLibraries()
+			})
 	}
 }
