@@ -30,3 +30,5 @@ Once it has found all the items (or before, it still works), click "Refresh Meta
 
 1. Switch to Vue
 2. Better library creation process
+
+This whole thing is still a bit janky. Give me a shout in the Issues for new feature requests.
