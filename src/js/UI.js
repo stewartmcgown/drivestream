@@ -2,6 +2,7 @@ import Components from "./Components"
 import DriveStream from "./DriveStream"
 import Library from "./Library"
 import loadingToast from "./Toasts/LoadingToast"
+import HashRouter from "./HashRouter";
 require("../sass/drivestream.scss")
 require("./materialize.js")
 
@@ -19,15 +20,21 @@ export default class UI {
 		}
 
 		this.setEvents()
+		this.enableHash()
+	}
+
+	enableHash() {
+		const router = new HashRouter(this.drivestream)
+		router.setDefaultRoute(this.drivestream.getLibrary.bind(this.drivestream))
 	}
 
 	setEvents() {
 		M.AutoInit()
-		document.querySelector("#nav-search").addEventListener("keyup", e => {
-			;[...document.querySelectorAll(".mediaItem")].forEach(f =>
-				f.innerHTML.toLowerCase().includes(e.target.value.toLowerCase())
-					? (f.style.display = "block")
-					: (f.style.display = "none")
+		document.querySelector("#nav-search").addEventListener("keyup", e => {;
+			[...document.querySelectorAll(".mediaItem")].forEach(f =>
+				f.dataset.indexableText.toLowerCase().includes(e.target.value.toLowerCase()) ?
+				(f.style.display = "block") :
+				(f.style.display = "none")
 			)
 		})
 
@@ -48,21 +55,29 @@ export default class UI {
       					</label>
 					`
 				})
+
+				const idElement = element.querySelector("#newLibraryRoot")
+				const nameElement = element.querySelector("#newLibraryName")
+				element.querySelectorAll("[type=radio]").forEach(el => {
+					el.addEventListener("change", f => {
+						idElement.value = f.target.value
+						nameElement.value = f.target.parentElement.querySelector("span").innerText
+					})
+				})
 			})
 
 			element.querySelector("#createLibrary").addEventListener("click", e => {
+
+
 				const name = element.querySelector("#newLibraryName").value
 				const type = element.querySelector("#newLibraryType").value
-				const id = element.querySelector("[type=radio]:checked").value
-				const toast = M.toast({
-					html: loadingToast(`Creating Library '${name}'...`),
-					displayLength: Infinity
-				})
+				const root = element.querySelector("#newLibraryRoot").value
+
 
 				this.drivestream.createLibrary({
 					name,
 					type,
-					root: id
+					root
 				})
 			})
 		})
@@ -88,19 +103,15 @@ export default class UI {
 
 		let that = this
 
-		$("a.openLibrary").on("click", function() {
-			that.drivestream.getLibrary($(this).attr("data-library-id"))
-		})
-
-		$("a.updateLibrary").on("click", function() {
+		$("a.updateLibrary").on("click", function () {
 			that.drivestream.updateLibrary($(this).attr("data-library-id"))
 		})
 
-		$("a.refreshMetaLibrary").on("click", function() {
+		$("a.refreshMetaLibrary").on("click", function () {
 			that.drivestream.refreshMetaLibrary($(this).attr("data-library-id"))
 		})
 
-		$("a.deleteLibrary").on("click", function() {
+		$("a.deleteLibrary").on("click", function () {
 			that.drivestream.deleteLibrary($(this).attr("data-library-id"))
 		})
 	}

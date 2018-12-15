@@ -16,10 +16,17 @@ export const CLIENT_ID = "YOUR_CLIENT_ID"
 
 3. Run the project using `npm run dev`
 
+## Demo
+
+View the live demo at [my personal site](https://twistedcore.co.uk/drivestream).
+
 ## Create a Library
 
-Haven't made the UI work with this yet. Run `app.createLibrary({name: "name", root: "rootFolderID"})` to make one. Promise I'll add this to the UI soon!
+Click the '+' in the top right of the page. Either choose a folder from the list or paste in the ID.
+Once a library has been created, click "Update". It will find all the items. Check the console for updates.
+Once it has found all the items (or before, it still works), click "Refresh MetaData". It will match all the items to the Movie DB.
 
 ## Roadmap
 
 1. Switch to Vue
+2. Better library creation process

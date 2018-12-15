@@ -1,5 +1,7 @@
-$BoxShadowMedium: 0 10px 20px rgba(0, 0, 0, 0.19), 0 6px 6px rgba(0, 0, 0, 0.23);
-$BoxShadowHeavy: 0 19px 38px rgba(0, 0, 0, 0.3), 0 15px 12px rgba(0, 0, 0, 0.22);
+$BoxShadowMedium: 0 10px 20px rgba(0, 0, 0, 0.19),
+0 6px 6px rgba(0, 0, 0, 0.23);
+$BoxShadowHeavy: 0 19px 38px rgba(0, 0, 0, 0.3),
+0 15px 12px rgba(0, 0, 0, 0.22);
 
 * {
 	font-family: "Montserrat", sans-serif;
@@ -17,7 +19,8 @@ body {
 
 	.sign-in-container {
 		display: flex;
-		justify-content: center; /* align horizontal */
+		justify-content: center;
+		/* align horizontal */
 		align-items: center;
 		width: 100%;
 		height: 100%;
@@ -75,12 +78,13 @@ body {
 		display: grid;
 		grid-template-columns: repeat(6, 1fr);
 		grid-column-gap: 16px;
+
 		.col {
 			&:hover {
-				img {
-				}
+				img {}
 			}
 		}
+
 		.media-card {
 			border-radius: 4px;
 			position: relative;
@@ -88,6 +92,7 @@ body {
 			a.card-url {
 				color: #000;
 			}
+
 			.card-image {
 				overflow: hidden;
 
@@ -101,6 +106,7 @@ body {
 					opacity: 1;
 				}
 			}
+
 			.card-content {
 				position: absolute;
 				padding: 12px;
@@ -109,6 +115,7 @@ body {
 				bottom: 0;
 				background: rgba(0, 0, 0, 0.6);
 				width: 100%;
+				transition: all ease-in-out 0.3s;
 
 				.card-title,
 				span {
@@ -137,7 +144,7 @@ body {
 }
 
 @media only screen and (min-width: 993px) {
-	body > #toast-container {
+	body>#toast-container {
 		top: auto;
 		right: auto;
 		bottom: 3%;
@@ -194,6 +201,7 @@ body {
 }
 
 @-webkit-keyframes colors {
+
 	0%,
 	100% {
 		stroke: #4285f4;
@@ -213,6 +221,7 @@ body {
 }
 
 @keyframes colors {
+
 	0%,
 	100% {
 		stroke: #4285f4;

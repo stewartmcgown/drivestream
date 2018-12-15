@@ -4,8 +4,8 @@ import MediaItem from "./MediaItem"
  * A library of dynamic, reusable components
  */
 export default class Components {
-	static signIn(message = "Sign in with Google") {
-		return `
+    static signIn(message = "Sign in with Google") {
+        return `
         <div class="sign-in-container">
         <div class="sign-in-inner">
             <a class="button sign-in" href="#" onclick="gapi.load('client:auth2', app.loadDriveAPI)">
@@ -17,14 +17,14 @@ export default class Components {
             </div>
             </div>
         `
-	}
+    }
 
-	/**
-	 *
-	 * @param {MediaItem} media
-	 */
-	static mediaItem(media) {
-		return `<div class="mediaItem">
+    /**
+     *
+     * @param {MediaItem} media
+     */
+    static mediaItem(media) {
+        return `<div class="mediaItem" data-indexable-text="${media.indexableText}">
                 <a href="${media.playbackUrl}" class="card-url" target="_blank">
                     <div class="card vertical media-card" id="${media.id}">
                         <div class="card-image">
@@ -40,16 +40,16 @@ export default class Components {
                     </div>
                 </a>
             </div>`
-	}
+    }
 
-	static library(library) {
-		return `
+    static library(library) {
+        return `
                    <div class="card"> 
                      <div class="card-content" 
                        <span class="card-title">${library.name}</span> 
                      </div> 
                       <div class="card-action"> 
-                       <a href="#" data-library-id="${
+                       <a href="#${library.id}" data-library-id="${
 													library.id
 												}" data-library-name="${
 			library.name
@@ -68,5 +68,5 @@ export default class Components {
                       </div> 
                     </div> 
             `
-	}
+    }
 }

@@ -1,5 +1,7 @@
 import Parser from "parse-torrent-title"
-import { millisToDate } from "./Utils"
+import {
+	millisToDate
+} from "./Utils"
 export default class MediaItem {
 	/**
 	 * Creates a media item
@@ -12,9 +14,9 @@ export default class MediaItem {
 
 		this.id = a ? file[0] : file.id
 		this.name = a ? file[1] : MediaItem.getTitle(file.name)
-		this.durationMillis = a
-			? Number.parseInt(file[2])
-			: file.videoMediaMetadata.durationMillis
+		this.durationMillis = a ?
+			Number.parseInt(file[2]) :
+			file.videoMediaMetadata.durationMillis
 		this.width = a ? Number.parseInt(file[4]) : file.videoMediaMetadata.width
 		this.height = a ? Number.parseInt(file[3]) : file.videoMediaMetadata.height
 		this.size = a ? file[5] : file.size
@@ -119,7 +121,9 @@ export default class MediaItem {
 	getPoster(size = 400) {
 		if (this.poster_path)
 			return `https://image.tmdb.org/t/p/w${size}${this.poster_path}`
-		else return this.getThumbSize({ width: size })
+		else return this.getThumbSize({
+			width: size
+		})
 	}
 
 	/**
@@ -156,5 +160,9 @@ export default class MediaItem {
 			this.poster_path,
 			this.description
 		]
+	}
+
+	get indexableText() {
+		return `${this.description} ${this.title} ${this.year}`
 	}
 }

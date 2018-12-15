@@ -2,7 +2,10 @@ import MetadataEngine from "./MetadataEngine"
 import Library from "./Library"
 import MediaItem from "./MediaItem"
 import UI from "./UI"
-import { API_KEY, CLIENT_ID } from "../../credentials.js"
+import {
+	API_KEY,
+	CLIENT_ID
+} from "../../credentials.js"
 import loadingToast from "./Toasts/LoadingToast"
 
 export const DISCOVERY_DOCS = [
@@ -29,8 +32,7 @@ export default class DriveStream {
 	}
 
 	loadDriveAPI() {
-		gapi.auth2.authorize(
-			{
+		gapi.auth2.authorize({
 				client_id: CLIENT_ID,
 				immediate: false,
 				scope: SCOPES
@@ -76,32 +78,41 @@ export default class DriveStream {
 	 * @param {Library} library
 	 */
 	createLibrary(library) {
+		const toast = M.toast({
+			html: loadingToast(`Creating Library '${library.name}'...`),
+			displayLength: Infinity
+		})
 		gapi.client.sheets.spreadsheets
-			.create(
-				{},
-				{
-					properties: {
-						title: library.name
-					}
+			.create({}, {
+				properties: {
+					title: library.name
 				}
-			)
+			})
 			.then(sheets => {
 				gapi.client.drive.files
 					.update({
 						fileId: sheets.result.spreadsheetId,
 						removeParents: "root",
 						fields: "id, name, properties",
-						resource: { properties: [{ drivestream: "library" }] }
+						resource: {
+							properties: [{
+								drivestream: "library"
+							}]
+						}
 					})
 					.then(r => {
 						gapi.client.drive.files
 							.update({
 								fileId: sheets.result.spreadsheetId,
 								fields: "id, name, properties",
-								resource: { properties: [{ root: library.root }] }
+								resource: {
+									properties: [{
+										root: library.root
+									}]
+								}
 							})
 							.then(r => {
-								console.log(r)
+								toast.dismiss()
 								this.getLibraries()
 							})
 					})
@@ -158,6 +169,7 @@ export default class DriveStream {
 
 	getLibrary(id) {
 		let library = this.findLibraryById(id)
+		if (!library) return
 
 		const toast = M.toast({
 			html: loadingToast(`Opening ${library.name}...`),
@@ -205,7 +217,12 @@ export default class DriveStream {
 		})
 
 		gapi.client.drive.files
-			.update({ fileId: library.id, resource: { trashed: true } })
+			.update({
+				fileId: library.id,
+				resource: {
+					trashed: true
+				}
+			})
 			.then(r => {
 				toast.dismiss()
 				this.getLibraries()
