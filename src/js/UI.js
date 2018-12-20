@@ -2,7 +2,7 @@ import Components from "./Components"
 import DriveStream from "./DriveStream"
 import Library from "./Library"
 import loadingToast from "./Toasts/LoadingToast"
-import HashRouter from "./HashRouter";
+import HashRouter from "./HashRouter"
 require("../sass/drivestream.scss")
 require("./materialize.js")
 
@@ -30,11 +30,13 @@ export default class UI {
 
 	setEvents() {
 		M.AutoInit()
-		document.querySelector("#nav-search").addEventListener("keyup", e => {;
-			[...document.querySelectorAll(".mediaItem")].forEach(f =>
-				f.dataset.indexableText.toLowerCase().includes(e.target.value.toLowerCase()) ?
-				(f.style.display = "block") :
-				(f.style.display = "none")
+		document.querySelector("#nav-search").addEventListener("keyup", e => {
+			;[...document.querySelectorAll(".mediaItem")].forEach(f =>
+				f.dataset.indexableText
+					.toLowerCase()
+					.includes(e.target.value.toLowerCase())
+					? (f.style.display = "block")
+					: (f.style.display = "none")
 			)
 		})
 
@@ -45,40 +47,40 @@ export default class UI {
 
 			this.drivestream.getFolders().then(response => {
 				const target = element.querySelector(".folders")
-				response.result.files.forEach(f => {
+				target.innerHTML = ""
+				response.result.items.forEach(f => {
 					target.innerHTML += `
 						<label>
         					<input type="radio" name="folder-group" class="with-gap" value="${
 										f.id
 									}" />
-        					<span>${f.name}</span>
+        					<span>${f.title}</span>
       					</label>
 					`
 				})
-
-				const idElement = element.querySelector("#newLibraryRoot")
-				const nameElement = element.querySelector("#newLibraryName")
-				element.querySelectorAll("[type=radio]").forEach(el => {
-					el.addEventListener("change", f => {
-						idElement.value = f.target.value
-						nameElement.value = f.target.parentElement.querySelector("span").innerText
-					})
-				})
 			})
+		})
 
-			element.querySelector("#createLibrary").addEventListener("click", e => {
+		const idElement = document.querySelector("#newLibraryRoot")
+		const nameElement = document.querySelector("#newLibraryName")
+		document.querySelectorAll("[type=radio]").forEach(el => {
+			el.addEventListener("change", f => {
+				idElement.value = f.target.value
+				nameElement.value = f.target.parentElement.querySelector(
+					"span"
+				).innerText
+			})
+		})
 
+		document.querySelector("#createLibrary").addEventListener("click", e => {
+			const name = document.querySelector("#newLibraryName").value
+			const type = document.querySelector("#newLibraryType").value
+			const root = document.querySelector("#newLibraryRoot").value
 
-				const name = element.querySelector("#newLibraryName").value
-				const type = element.querySelector("#newLibraryType").value
-				const root = element.querySelector("#newLibraryRoot").value
-
-
-				this.drivestream.createLibrary({
-					name,
-					type,
-					root
-				})
+			this.drivestream.createLibrary({
+				name,
+				type,
+				root
 			})
 		})
 	}
@@ -103,15 +105,15 @@ export default class UI {
 
 		let that = this
 
-		$("a.updateLibrary").on("click", function () {
+		$("a.updateLibrary").on("click", function() {
 			that.drivestream.updateLibrary($(this).attr("data-library-id"))
 		})
 
-		$("a.refreshMetaLibrary").on("click", function () {
+		$("a.refreshMetaLibrary").on("click", function() {
 			that.drivestream.refreshMetaLibrary($(this).attr("data-library-id"))
 		})
 
-		$("a.deleteLibrary").on("click", function () {
+		$("a.deleteLibrary").on("click", function() {
 			that.drivestream.deleteLibrary($(this).attr("data-library-id"))
 		})
 	}
@@ -126,8 +128,22 @@ export default class UI {
 	 */
 	showMediaItem(mediaItem) {
 		if (mediaItem.name == "") return
+		const e = Components.mediaItem(mediaItem)
+		this.containers.media.append(e)
 
-		this.containers.media.append(Components.mediaItem(mediaItem))
+		e.addEventListener("click", e => {
+			const element = document.querySelector("#play")
+			element.innerHTML = ""
+			const instance = M.Modal.getInstance(element)
+			instance.open()
+
+			this.drivestream.getDownloadURL(mediaItem).then(url => {
+				const video = document.createElement("video")
+				video.src = url
+				video.controls = true
+				element.append(video)
+			})
+		})
 	}
 
 	updateMediaItem(mediaItem) {

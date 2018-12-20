@@ -24,3 +24,6 @@ export const millisToDate = millis => {
 }
 
 export const sleep = time => new Promise(resolve => setTimeout(resolve, time))
+
+export const getPropFromKey = (properties, key, valueProp = "value") =>
+	properties.find(p => p.key == key)[valueProp]

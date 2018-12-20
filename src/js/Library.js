@@ -1,5 +1,5 @@
 import MediaScanner from "./MediaScanner"
-import { sleep } from "./Utils"
+import { sleep, getPropFromKey } from "./Utils"
 
 export default class Library {
 	/**
@@ -8,9 +8,14 @@ export default class Library {
 	 */
 	constructor(options, drivestream) {
 		this.id = options.id
-		this.name = options.name
+		this.name = options.title
 		this.type = options.type
-		this.root = options.properties.root
+		this.root = getPropFromKey(options.properties, "root")
+		if (!this.root) {
+			console.log(this.root)
+			console.log(options.properties)
+			console.log(getPropFromKey(options.properties, "root"))
+		}
 
 		/** @type {Array.<MediaItem>} */
 		this.mediaItems = []

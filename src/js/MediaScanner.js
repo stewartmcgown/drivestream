@@ -1,6 +1,4 @@
-import {
-	sleep
-} from "./Utils"
+import { sleep } from "./Utils"
 import MediaItem from "./MediaItem"
 import Library from "./Library"
 
@@ -79,8 +77,7 @@ export default class MediaScanner {
 
 	printUnsupportedMimeTypes() {
 		let s = ""
-		for (let i = 0, mime;
-			(mime = this.UNSUPPORTED_FILE_TYPES[i]); i++) {
+		for (let i = 0, mime; (mime = this.UNSUPPORTED_FILE_TYPES[i]); i++) {
 			if (s.length > 0) s += " "
 
 			s += `mimeType contains '${mime}'`
@@ -104,9 +101,10 @@ export default class MediaScanner {
 			.initiateClient()
 			.then(() =>
 				gapi.client.drive.files.list({
-					q: `'${root}' in parents and not (${this.printUnsupportedMimeTypes()}) and (mimeType contains 'video/' or mimeType contains 'application/vnd.google-apps.folder') and not (name contains 'sample')`,
+					q: `'${root}' in parents and not (${this.printUnsupportedMimeTypes()}) and (mimeType contains 'video/' or mimeType contains 'application/vnd.google-apps.folder') and not (title contains 'sample')`,
 					spaces: "drive",
-					fields: "nextPageToken,files(id,name,size,mimeType,videoMediaMetadata,thumbnailLink)",
+					fields:
+						"nextPageToken,items(id,title,fileSize,mimeType,videoMediaMetadata,thumbnailLink)",
 					pageToken: nextPageToken,
 					pageSize: this.PAGE_SIZE
 				})
@@ -116,8 +114,8 @@ export default class MediaScanner {
 
 				if (response.result.error) {
 					this.recusriveListFolder(root, nextPageToken)
-				} else if (response.result.files) {
-					this.processMediaFileList(response.result.files)
+				} else if (response.result.items) {
+					this.processMediaFileList(response.result.items)
 
 					if (response.result.nextPageToken) {
 						this.recusriveListFolder(root, response.result.nextPageToken)

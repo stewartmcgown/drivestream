@@ -2,14 +2,11 @@ import MetadataEngine from "./MetadataEngine"
 import Library from "./Library"
 import MediaItem from "./MediaItem"
 import UI from "./UI"
-import {
-	API_KEY,
-	CLIENT_ID
-} from "../../credentials.js"
+import { API_KEY, CLIENT_ID } from "../../credentials.js"
 import loadingToast from "./Toasts/LoadingToast"
 
 export const DISCOVERY_DOCS = [
-	"https://www.googleapis.com/discovery/v1/apis/drive/v3/rest",
+	"https://www.googleapis.com/discovery/v1/apis/drive/v2/rest",
 	"https://sheets.googleapis.com/$discovery/rest?version=v4"
 ]
 export const SCOPES =
@@ -32,7 +29,8 @@ export default class DriveStream {
 	}
 
 	loadDriveAPI() {
-		gapi.auth2.authorize({
+		gapi.auth2.authorize(
+			{
 				client_id: CLIENT_ID,
 				immediate: false,
 				scope: SCOPES
@@ -68,7 +66,7 @@ export default class DriveStream {
 		return await gapi.client.drive.files.list({
 			q: `mimeType contains 'folder' and 'root' in parents and not trashed`,
 			spaces: "drive",
-			fields: "nextPageToken,files(id,name,properties)",
+			fields: "nextPageToken,items(id,title,properties)",
 			pageSize: 1000
 		})
 	}
@@ -83,32 +81,43 @@ export default class DriveStream {
 			displayLength: Infinity
 		})
 		gapi.client.sheets.spreadsheets
-			.create({}, {
-				properties: {
-					title: library.name
+			.create(
+				{},
+				{
+					properties: {
+						title: library.name
+					}
 				}
-			})
+			)
 			.then(sheets => {
 				gapi.client.drive.files
 					.update({
 						fileId: sheets.result.spreadsheetId,
 						removeParents: "root",
-						fields: "id, name, properties",
+						fields: "id, title, properties",
 						resource: {
-							properties: [{
-								drivestream: "library"
-							}]
+							properties: [
+								{
+									key: "drivestream",
+									value: "library",
+									visibility: "PUBLIC"
+								}
+							]
 						}
 					})
 					.then(r => {
 						gapi.client.drive.files
 							.update({
 								fileId: sheets.result.spreadsheetId,
-								fields: "id, name, properties",
+								fields: "id, title, properties",
 								resource: {
-									properties: [{
-										root: library.root
-									}]
+									properties: [
+										{
+											key: "root",
+											value: library.root,
+											visibility: "PUBLIC"
+										}
+									]
 								}
 							})
 							.then(r => {
@@ -145,13 +154,13 @@ export default class DriveStream {
 		})
 		gapi.client.drive.files
 			.list({
-				q: `properties has {key='drivestream' and value='library'} and trashed = false`,
+				q: `properties has { key='drivestream' and value='library' and visibility='PUBLIC' } and trashed = false`,
 				spaces: "drive",
-				fields: "nextPageToken,files(id,name,properties)",
+				fields: "nextPageToken,items(id,title,properties)",
 				pageSize: 1000
 			})
 			.then(response => {
-				this.setLibraries(response.result.files)
+				this.setLibraries(response.result.items)
 				toast.dismiss()
 			})
 	}
@@ -217,15 +226,30 @@ export default class DriveStream {
 		})
 
 		gapi.client.drive.files
-			.update({
-				fileId: library.id,
-				resource: {
-					trashed: true
-				}
+			.trash({
+				fileId: library.id
 			})
 			.then(r => {
 				toast.dismiss()
 				this.getLibraries()
 			})
+	}
+
+	/**
+	 * Get the download URL of a file
+	 * @param {MediaItem} mediaItem
+	 */
+	getDownloadURL(mediaItem) {
+		return new Promise((resolve, reject) =>
+			gapi.client.drive.files
+				.get({
+					fileId: mediaItem.id,
+					fields: "downloadUrl"
+				})
+				.then(r => {
+					let d = r.result.downloadUrl
+					resolve(d.substr(0, d.length - 8))
+				})
+		)
 	}
 }

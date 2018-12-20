@@ -24,14 +24,56 @@
 		<span></span>
 		<script type="text/javascript">
 			window.onload = function() {
+				var vidElement = document.querySelector("video")
+
+				if (window.MediaSource) {
+					var mediaSource = new MediaSource()
+					vidElement.src = URL.createObjectURL(mediaSource)
+					mediaSource.addEventListener("sourceopen", sourceOpen)
+				} else {
+					console.log("The Media Source Extensions API is not supported.")
+				}
+
+				function sourceOpen(e) {
+					URL.revokeObjectURL(vidElement.src)
+					var mime = 'video/webm; codecs="vp8"'
+					var mediaSource = e.target
+					var sourceBuffer = mediaSource.addSourceBuffer(mime)
+					var videoUrl =
+						"https://www.googleapis.com/drive/v3/files/1PJKaDOsCmHENrrPa7nDDtbBY2UnJ-xtE?alt=media"
+					const access =
+						"ya29.Gl12Bn4fNrDroVA4KlOJV3flMV5aA98ZrT8jHTiOoTxY3Oe3FDBJxB8koSS5N_YYjrDTeawp5wfn-FhrxTVnMh1eHXBdPJuWkdRAdbmmpzxQnuXiz7s5rTrG9enB3Co"
+					fetch(videoUrl, {
+						headers: new Headers({
+							Authorization: `Bearer ${access}`
+						})
+					})
+						.then(function(response) {
+							return response.arrayBuffer()
+						})
+						.then(function(arrayBuffer) {
+							sourceBuffer.addEventListener("updateend", function(e) {
+								if (
+									!sourceBuffer.updating &&
+									mediaSource.readyState === "open"
+								) {
+									mediaSource.endOfStream()
+								}
+							})
+							sourceBuffer.appendBuffer(arrayBuffer)
+						})
+				}
+			}
+
+			function doMethodTwo() {
 				var url =
-					"https://www.googleapis.com/drive/v3/files/1WNDle_tsDbQ9-Dqewer373BRA7bOA9O_?alt=media"
+					"https://www.googleapis.com/drive/v3/files/14jnMVHXwaUxc1kS1HGx2paQ4tFZ-K5Of?alt=media"
 
 				var body = document.querySelector("body")
 				var mediaSource = new MediaSource()
 				var video = document.querySelector("video")
 				var span = document.querySelector("span")
-				var mimecodec = 'video/mp4; codecs="avc1.42E01E, mp4a.40.2"'
+				var mimecodec = 'video/webm;codecs="vp8, vorbis"'
 
 				video.oncanplay = function() {
 					this.play()
@@ -55,11 +97,11 @@
 					if (MediaSource.isTypeSupported(mimecodec)) {
 						var sourceBuffer = mediaSource.addSourceBuffer(mimecodec)
 						sourceBuffer.mode = "sequence"
-
+						const access =
+							"ya29.Gl12Bn4fNrDroVA4KlOJV3flMV5aA98ZrT8jHTiOoTxY3Oe3FDBJxB8koSS5N_YYjrDTeawp5wfn-FhrxTVnMh1eHXBdPJuWkdRAdbmmpzxQnuXiz7s5rTrG9enB3Co"
 						fetch(url, {
 							headers: new Headers({
-								Authorization:
-									"Bearer ya29.Gl1tBhR8TgsQrhVNcPLJSGx_TAq7W_iFjXgTTZOL16QHlgsdNqqJsXiYiLuB4zG-Nmk9fzPmWB8-5BRj1yipC0q_4q9yTGdeFXuP87IP6AowRe9_8jb5fv1GBcPVAF4"
+								Authorization: `Bearer ${access}`
 							})
 						})
 							// return `ReadableStream` of `response`
