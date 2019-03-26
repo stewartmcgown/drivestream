@@ -58,6 +58,17 @@ export default class UI {
       					</label>
 					`
 				})
+
+				const idElement = document.querySelector("#newLibraryRoot")
+				const nameElement = document.querySelector("#newLibraryName")
+				document.querySelectorAll("[type=radio]").forEach(el => {
+					el.addEventListener("change", f => {
+						idElement.value = f.target.value
+						nameElement.value = f.target.parentElement.querySelector(
+							"span"
+						).innerText
+					})
+		})
 			})
 		})
 
