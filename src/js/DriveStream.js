@@ -206,7 +206,7 @@ export default class DriveStream {
 		const toast = M.toast({
 			html: loadingToast(`Updating ${library.name}...`)
 		})
-		library.update()
+		library.update({ toast })
 	}
 
 	refreshMetaLibrary(id) {

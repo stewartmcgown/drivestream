@@ -30,8 +30,9 @@ export default class Library {
 		this.SHEET_EXPIRY = 100000
 	}
 
-	update() {
+	update({ toast }) {
 		this.drivestream.ui.setScanning(this)
+		this.toast = toast
 		this.scanner.scan()
 	}
 

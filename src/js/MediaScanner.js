@@ -51,6 +51,8 @@ export default class MediaScanner {
 	addMediaItem(mediaItem) {
 		this.mediaItems.push(mediaItem)
 		this.library.updateMediaItems()
+		console.log(this.library.toast)
+		this.library.toast.html = "kjbfksjdb"
 	}
 
 	scan() {
