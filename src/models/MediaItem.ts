@@ -15,8 +15,6 @@ export class MediaItem {
     public poster_path: string = '';
     public description: string = '';
 
-
-
     public libraryId: string = '';
     
     static fromGoogleDriveFile(file: any) {

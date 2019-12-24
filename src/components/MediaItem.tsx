@@ -1,7 +1,7 @@
 import React from 'react';
 import { MediaItem as MediaItemProps } from "../models/MediaItem";
 
-export const MediaItem = (media: MediaItemProps) => {
+export const MediaItem = ({ media }: { media: MediaItemProps } ) => {
     return (<a className="card-url" target="_blank">
                 <div className="card vertical media-card" id={media.id}>
                     <div className="card-image">

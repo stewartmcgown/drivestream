@@ -1,8 +1,39 @@
 import { sleep } from "../utils/sleep";
 import { Config } from "../config";
+import { MediaItem } from "../models/MediaItem";
+import { Library, LibraryType } from "../models/Library";
+
+export interface MetadataResult {
+        type: LibraryType;
+        poster_path: string;
+        adult: boolean;
+        overview: string;
+        release_date: string;
+        genre_ids: number[];
+        id: number;
+        original_title: string;
+        original_language: string;
+        title: string;
+        backdrop_path: string;
+        popularity: number;
+        vote_count: number;
+        video: boolean;
+        vote_average: number;
+}
+
+
+
+export interface GetMetadataOptions {
+    mediaItem: MediaItem;
+
+    library: Library;
+
+    refresh?: boolean;
+}
 
 const PERIOD = 250;
 const MAX_REQUESTS = 10;
+const SUPPORTED_TYPES: LibraryType[] = ['Movies', 'TV'];
 
 export default class MetadataEngine {
 
@@ -23,25 +54,21 @@ export default class MetadataEngine {
 		)
 	}
 
-	/**
-	 *
-	 * @param {MediaItem} mediaItem
-	 */
-	async getMetadata(mediaItem, refresh = false) {
-		if (!mediaItem.name) return
+	async getMetadata(options: GetMetadataOptions): Promise<MetadataResult> {
+        const { mediaItem, library, refresh } = options;
 
-		if (mediaItem.description && mediaItem.poster_path && !refresh)
-			// Skip if already has metadata
-			return
+		if (!mediaItem.name || (mediaItem.description && mediaItem.poster_path && !refresh)) throw new Error()
 
+        if (!SUPPORTED_TYPES.includes(library.type)) throw new Error();
+            
 		while (this.mustWait()) {
 			// avoid ratelimitting from Movie API
 			await sleep(PERIOD)
 		}
 
-		this.requestSemaphore--;
+        this.requestSemaphore--;
 
-		let url = `https://api.themoviedb.org/3/search/movie?include_adult=false&page=1&query=${
+		let url = `https://api.themoviedb.org/3/search/${library.type.toLowerCase()}?include_adult=false&page=1&query=${
 				mediaItem.name
 			}&language=en-US&api_key=${Config.tmdbKey}`;
 
@@ -51,10 +78,6 @@ export default class MetadataEngine {
         const metadata = await fetch(url).then(r => r.json())
 		this.requestSemaphore++
 
-		if (!metadata?.results?.[0]) return;
-
-		console.log(metadata.results[0])
-
-		mediaItem.setMetadata(metadata.results[0])
+		return metadata?.results?.[0];
 	}
 }
