@@ -45,7 +45,11 @@ const useStyles = makeStyles((theme: Theme) =>
         },
         title: {
             flexGrow: 1,
+            cursor: 'pointer',
           },
+        'title:hover': {
+            borderBottom: '2px solid white'
+        },
         toolbar: theme.mixins.toolbar,
     }),
 );
@@ -71,9 +75,9 @@ export const SidebarContent = ({ children }: { children?: ReactNode }) => {
             <CssBaseline />
             <AppBar position="fixed" className={classes.appBar}>
                 <Toolbar>
-                    <Typography variant="h6" noWrap className={classes.title}>
+                    <Typography variant="h6" onClick={() => history.push('/')} noWrap className={classes.title}>
                         DriveStream
-          </Typography>
+                    </Typography>
 
                     <div>
                         <IconButton
@@ -117,14 +121,14 @@ export const SidebarContent = ({ children }: { children?: ReactNode }) => {
                 <Divider />
                 <List>
                     {libraries ? libraries.map((l, index) => (
-                        <ListItem button key={l.id}>
-                            <ListItemText primary={(l as any).title} />
+                        <ListItem button onClick={() => history.push(`/library/${l.id}`)} key={l.id}>
+                            <ListItemText primary={l.name} />
                         </ListItem>
                     )) : <CircularProgress />}
                 </List>
                 <Divider />
                 <List>
-                    {['All mail', 'Trash', 'Spam'].map((text, index) => (
+                    {['Settings'].map((text, index) => (
                         <ListItem button key={text}>
                             <ListItemText primary={text} />
                         </ListItem>

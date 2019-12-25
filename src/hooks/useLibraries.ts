@@ -9,14 +9,13 @@ export const useLibraries = (): [Library[], boolean] => {
 
     useEffect(() => {
         const fetchLibraries = async () => {
-            const { result: { items }} = await gapi.client.drive.files.list({
-				q: `properties has { key='drivestream' and value='library' and visibility='PUBLIC' } and trashed = false`,
-				spaces: "drive",
-				fields: "nextPageToken,items(id,title,properties)",
+            const { result: { files }} = await gapi.client.drive.files.list({
+                q: `properties has { key='drivestream' and value='library' } and trashed = false`,
+				fields: "nextPageToken,files(id,name,properties)",
 				pageSize: 1000
             })
 
-            setLibraries(items);
+            setLibraries(files);
 
         }
 
