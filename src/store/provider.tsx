@@ -1,7 +1,8 @@
-import { createGlobalState } from 'react-hooks-global-state';
+import { createGlobalState, createStore } from 'react-hooks-global-state';
 import { DefaultStore } from "./store";
+import { Reducer } from './reducer';
 
-const { GlobalStateProvider, useGlobalState } = createGlobalState(DefaultStore);
+const { GlobalStateProvider, dispatch, useGlobalState } = createStore(Reducer, DefaultStore);
 
 export const
     useStore = useGlobalState;

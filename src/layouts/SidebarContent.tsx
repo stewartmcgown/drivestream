@@ -10,6 +10,7 @@ import Divider from '@material-ui/core/Divider';
 import ListItem from '@material-ui/core/ListItem';
 import IconButton from '@material-ui/core/IconButton';
 import MenuIcon from '@material-ui/icons/Menu';
+import SettingsIcon from '@material-ui/icons/Settings'
 import AddCircle from '@material-ui/icons/AddCircle';
 import Switch from '@material-ui/core/Switch';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
@@ -17,10 +18,11 @@ import FormGroup from '@material-ui/core/FormGroup';
 import MenuItem from '@material-ui/core/MenuItem';
 import Menu from '@material-ui/core/Menu';
 
-import { ListItemText, CircularProgress } from '@material-ui/core';
+import { ListItemText, CircularProgress, ListItemIcon } from '@material-ui/core';
 import { useHistory } from 'react-router-dom';
 import { useStore } from '../store';
 import { useLibraries } from '../hooks/useLibraries';
+import { LibrariesList } from '../components/LibrariesList';
 
 const drawerWidth = 240;
 
@@ -59,8 +61,6 @@ export const SidebarContent = ({ children }: { children?: ReactNode }) => {
     const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
     const isOpen = Boolean(anchorEl);
     const history = useHistory();
-    const [libraries, librariesLoading] = useLibraries();
-
 
     const handleMenu = (event: React.MouseEvent<HTMLElement>) => {
         setAnchorEl(event.currentTarget);
@@ -119,13 +119,7 @@ export const SidebarContent = ({ children }: { children?: ReactNode }) => {
             >
                 <div className={classes.toolbar} />
                 <Divider />
-                <List>
-                    {libraries ? libraries.map((l, index) => (
-                        <ListItem button onClick={() => history.push(`/library/${l.id}`)} key={l.id}>
-                            <ListItemText primary={l.name} />
-                        </ListItem>
-                    )) : <CircularProgress />}
-                </List>
+                <LibrariesList />
                 <Divider />
                 <List>
                     {['Settings'].map((text, index) => (

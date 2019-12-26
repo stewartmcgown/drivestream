@@ -1,5 +1,5 @@
 import { sleep } from "../utils/sleep";
-import { Config } from "../config";
+import { DevConfig } from "../config";
 import { MediaItem } from "../models/MediaItem";
 import { Library, LibraryType } from "../models/Library";
 
@@ -70,7 +70,7 @@ export default class MetadataEngine {
 
 		let url = `https://api.themoviedb.org/3/search/${library.type.toLowerCase()}?include_adult=false&page=1&query=${
 				mediaItem.name
-			}&language=en-US&api_key=${Config.tmdbKey}`;
+			}&language=en-US&api_key=${DevConfig.tmdbKey}`;
 
 		if (mediaItem.year) url = `${url}&year=${mediaItem.year}`
 

@@ -8,7 +8,8 @@ export const routes: { path: string, layout: React.FC, component: React.FC, exac
     {
         path: '/',
         layout: SidebarContent,
-        component: Dashboard
+        component: Dashboard,
+        exact: true,
     },
     {
         path: '/library/:id',

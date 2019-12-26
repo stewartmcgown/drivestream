@@ -11,7 +11,6 @@ import { routes } from './routes';
 import { theme } from './theme';
 import { ThemeProvider, CircularProgress } from '@material-ui/core';
 import { StoreProvider, useStore } from './store';
-import { Config } from './config';
 import { sleep } from './utils/sleep';
 
 
