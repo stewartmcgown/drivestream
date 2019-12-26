@@ -1,6 +1,6 @@
 import { Maybe } from "../../utils/maybe"
 
-export const updateDrivestreamFile = async ({ id, body, props }): Promise<Maybe<gapi.client.drive.File>> => {
+export const updateDrivestreamFile = async ({ id, body, props }: { id: string, body?: any, props?: any}): Promise<Maybe<gapi.client.drive.File>> => {
     // metadata only
     if (!body && props)
         return await (gapi.client.drive.files.update as any)({

@@ -1,4 +1,4 @@
-import { Handler, HandlerOptions } from "./handlers";
+import { Handler, HandlerOptions, registerHandlers } from "./handlers";
 
 export interface ParserResult {
     title: string;
@@ -115,3 +115,9 @@ export class Parser {
         return result;
 }
 }
+
+export const ParserInstance: Parser = (() => { 
+    const parser = new Parser();
+    registerHandlers(parser);
+    return parser;
+})();

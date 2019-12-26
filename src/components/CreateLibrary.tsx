@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { TextField, CircularProgress, Button, RadioGroup, FormControlLabel, Radio, Grid, Snackbar, IconButton } from '@material-ui/core';
-import { useStore } from '../store';
+import { useStore, dispatch } from '../store';
 import { useGapi } from '../hooks';
 import { createLibrary } from '../db/createLibrary';
+import { useScanLibrary } from '../hooks/useScanLibrary';
+import { useHistory } from 'react-router-dom';
 
 export const CreateLibrary = () => {
 
@@ -11,8 +13,8 @@ export const CreateLibrary = () => {
     const [foldersCalled, setFoldersCalled] = useState(false);
     const [folderId, setFolderId] = useState('');
     const [name, setName] = useState('');
-    const [open, setOpen] = useState(false);
-    const [snackMessage, setSnackMessage] = useState('');
+    const [snackbar] = useStore('snackbar');
+    const history = useHistory();
 
     useEffect(() => {
         const getFolders = async () => {
@@ -42,10 +44,10 @@ export const CreateLibrary = () => {
     }
 
     const doCreateLibrary = async () => {
-        setSnackMessage(`Creating '${name}'...`)
-        setOpen(true);
+        dispatch({ type: 'updateSnackbar', payload: { message: `Creating '${name}'...`}})
         const a = await createLibrary({ folderIds: [folderId], name, type: 'Movies' })
-        setOpen(false);
+        dispatch({ type: 'closeSnackbar' });
+        history.push(`/library/${a.id}`)
     }
 
     return (
@@ -65,15 +67,6 @@ export const CreateLibrary = () => {
             <TextField label="Library Name" value={name} onChange={e => setName(e.target.value)} variant="outlined" />
             <Button onClick={doCreateLibrary}>Create</Button>
         </form>
-        <Snackbar
-            anchorOrigin={{
-            vertical: 'bottom',
-            horizontal: 'left',
-            }}
-            open={open}
-            autoHideDuration={6000}
-            message={<span id="message-id">{snackMessage}</span>}
-        />
         </div>
     )
 }

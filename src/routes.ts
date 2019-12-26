@@ -1,7 +1,6 @@
 import { SidebarContent } from "./layouts/SidebarContent";
 import { Dashboard } from "./views/Dashboard";
-import { Library } from "./components/Library";
-import { Libraries } from "./views/Libraries";
+import { LibraryView } from "./views/Library";
 import { CreateLibrary } from "./components/CreateLibrary";
 
 export const routes: { path: string, layout: React.FC, component: React.FC, exact?: boolean }[] = [
@@ -14,7 +13,7 @@ export const routes: { path: string, layout: React.FC, component: React.FC, exac
     {
         path: '/library/:id',
         layout: SidebarContent,
-        component: Libraries
+        component: LibraryView
     },
     {
         path: '/new-library',

@@ -1,5 +1,5 @@
 import React from 'react';
-import { MediaItem } from "./MediaItem"
+import { MediaItemTile } from "./MediaItemTile"
 import { MediaItem as MediaItemModel } from '../models/MediaItem';
 
 export interface LibraryProps {
@@ -11,6 +11,6 @@ export const Library = ({
 }: LibraryProps) => {
 
     return <div>
-        {mediaItems.map(m => <MediaItem media={m} />)}
+        {mediaItems.map(m => <MediaItemTile media={m} />)}
     </div>
 }

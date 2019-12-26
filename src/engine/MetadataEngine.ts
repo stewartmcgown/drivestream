@@ -40,24 +40,24 @@ export default class MetadataEngine {
     /**
      * Request counter semaphore
      */
-	private requestSemaphore: number = MAX_REQUESTS;
-	private requestsInLastPeriod: number = 0
-	private lastRequestDate: Date = new Date()
+	private static requestSemaphore: number = MAX_REQUESTS;
+	private static requestsInLastPeriod: number = 0
+	private static lastRequestDate: Date = new Date()
 
     /**
      * If the engine must wait before it sends the next request
      */
-	mustWait() {
+	static mustWait() {
 		return (
 			new Date().getTime() - this.lastRequestDate.getTime() < PERIOD ||
 			this.requestSemaphore <= 0
 		)
 	}
 
-	async getMetadata(options: GetMetadataOptions): Promise<MetadataResult> {
+	static async getMetadata(options: GetMetadataOptions): Promise<MetadataResult> {
         const { mediaItem, library, refresh } = options;
 
-		if (!mediaItem.name || (mediaItem.description && mediaItem.poster_path && !refresh)) throw new Error()
+		if (!mediaItem.title || (mediaItem.description && mediaItem.poster_path && !refresh)) throw new Error()
 
         if (!SUPPORTED_TYPES.includes(library.type)) throw new Error();
             
@@ -69,7 +69,7 @@ export default class MetadataEngine {
         this.requestSemaphore--;
 
 		let url = `https://api.themoviedb.org/3/search/${library.type.toLowerCase()}?include_adult=false&page=1&query=${
-				mediaItem.name
+				mediaItem.title
 			}&language=en-US&api_key=${DevConfig.tmdbKey}`;
 
 		if (mediaItem.year) url = `${url}&year=${mediaItem.year}`

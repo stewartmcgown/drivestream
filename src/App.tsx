@@ -9,7 +9,7 @@ import { SidebarContent } from './layouts/SidebarContent';
 import { Dashboard } from './views/Dashboard';
 import { routes } from './routes';
 import { theme } from './theme';
-import { ThemeProvider, CircularProgress } from '@material-ui/core';
+import { ThemeProvider, CircularProgress, Snackbar } from '@material-ui/core';
 import { StoreProvider, useStore } from './store';
 import { sleep } from './utils/sleep';
 
@@ -17,6 +17,7 @@ import { sleep } from './utils/sleep';
 const App: React.FC = () => {
 
     const [auth, setAuth] = useStore('auth');
+    const [snackbar, dispatch] = useStore('snackbar');
 
     // Register Loaders
 
@@ -30,6 +31,16 @@ const App: React.FC = () => {
                             </r.layout>
                         } />) } />
                     }
+                    <Snackbar
+                        anchorOrigin={{
+                        vertical: 'bottom',
+                        horizontal: 'left',
+                        }}
+                        open={snackbar.open ?? false}
+                        autoHideDuration={6000}
+                        message={<span id="message-id">{snackbar.message || 'Loading...'}</span>}
+                        action={<CircularProgress />}
+                    />
                 </Container>
            
     );

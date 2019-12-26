@@ -1,3 +1,4 @@
+import { plainToClass } from 'class-transformer';
 import { Library, LibraryType } from "../models/Library";
 import { createDrivestreamFileType } from "./util/createDrivestreamFile";
 
@@ -17,7 +18,14 @@ export const createLibrary = async ({ folderIds, name, type }: CreateLibraryOpti
 
     if (!driveFile.id) throw new Error();
 
-    const library = new Library(driveFile.id, folderIds, name, type, 'AT_REST');
+    const library = plainToClass(Library, {
+        id: driveFile.id,
+        folders: folderIds,
+        name,
+        status: 'AT_REST',
+        type,
+        mediaItems: {}
+    })
 
     // Write library information as JSON
     await gapi.client.request({

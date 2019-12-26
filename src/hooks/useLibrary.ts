@@ -1,25 +1,32 @@
 import { useGapi } from "./useGapi"
 import { useEffect, useState } from "react";
 import { getLibrary } from "../db/getLibrary";
+import { Library } from "../models/Library";
+import { AsyncHookStatus } from "./asyncHook";
 
-export const useLibrary = (id: string) => {
-    const [gapi] = useGapi();
-    const [library, setLibrary] = useState({});
-    const [loading, setLoading] = useState(false);
+export interface UseLibraryHookStatus extends AsyncHookStatus {
+    data: Library;
+}
+
+export const useLibrary = (id: string): [() => void, UseLibraryHookStatus] => {
+    const [gapi, gapiReady] = useGapi();
+    const [library, setLibrary] = useState();
+    const [loading, setLoading] = useState(true);
+    const [called, setCalled] = useState(false);
 
     useEffect(() => {
         const fetchLibrary = async () => {
-            const response = await getLibrary({ gapi, id })
-
+            const response = await getLibrary({ id })
+            console.log(response);
             setLibrary(response);
+            setLoading(false);
         }
 
-        if (!loading && gapi) {
+        if (called && gapiReady) {
             setLoading(true);
             fetchLibrary();
         }
-    })
+    }, [gapiReady, called])
 
-
-    return [library, loading];
+    return [() => { setCalled(true); }, { loading, called, data: library }];
 }

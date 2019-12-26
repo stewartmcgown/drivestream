@@ -8,9 +8,13 @@ import { useLibraries } from '../hooks/useLibraries';
 import { ListItemText, ListItemIcon, CircularProgress } from '@material-ui/core';
 import { useHistory } from 'react-router-dom';
 import { deleteLibrary } from '../db/deleteLibrary';
+import { useScanLibrary } from '../hooks/useScanLibrary';
+import { dispatch, useStore } from '../store';
 
 export const LibraryListItem = ({ library }) => {
     const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+    const [scanLibrary, { loading, data}] = useScanLibrary({ id: library. id });
+    const [_] = useStore('snackbar');
     const isOpen = Boolean(anchorEl);
     const history = useHistory();
     
@@ -22,9 +26,15 @@ export const LibraryListItem = ({ library }) => {
         setAnchorEl(null);
       };
 
-      const handleDelete = async (id) => {
-            deleteLibrary({ id });
+      const handleDelete = async () => { 
+          dispatch({ type: 'updateSnackbar', payload: { message: `Deleting ${library.name}...` }});
+          await deleteLibrary({ id: library.id });
+          history.push('/')
+          dispatch({ type: 'closeSnackbar'})
       }
+
+      const handleScan = () => { scanLibrary(); handleClose(); }
+
     return (
         <ListItem button onClick={() => history.push(`/library/${library.id}`)} key={library.id}>
                             <ListItemText primary={library.name} />
@@ -36,8 +46,9 @@ export const LibraryListItem = ({ library }) => {
                             open={Boolean(anchorEl)}
                             onClose={handleClose}
                             >
+                            <MenuItem onClick={handleScan}>Scan Library Files</MenuItem>
                             <MenuItem onClick={handleClose}>Rename</MenuItem>
-                            <MenuItem onClick={e => { handleDelete(library.id); handleClose(); }}>Delete</MenuItem>
+                            <MenuItem onClick={e => { handleDelete(); handleClose(); }}>Delete</MenuItem>
                             </Menu>
                         </ListItem>
     )
